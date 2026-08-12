@@ -171,3 +171,37 @@ main{overflow:clip}
 .hero-qr{position:absolute;z-index:5;left:50%;bottom:217px;display:flex;flex-direction:column;align-items:center;gap:8px;transform:translateX(-50%);pointer-events:none;color:#697485;font:500 9px/1.4 DM Mono,monospace;letter-spacing:.12em;text-align:center;white-space:nowrap}
 .hero-qr img{display:block;width:78px;height:78px;border-radius:12px;mix-blend-mode:normal;filter:brightness(.82);box-shadow:none}
 @media(max-width:800px){.hero-qr{bottom:217px}.hero-qr img{width:68px;height:68px;border-radius:10px}}
+
+/* Keep the routed trade narrative intact on narrow screens. The animation uses
+   broker-stack, so these rules intentionally override the legacy broker-node
+   breakpoint above. */
+@media(max-width:800px){
+  .flow-sticky{min-height:100svh;padding:88px 18px 18px}
+  .flow-heading h2{font-size:43px;line-height:1;letter-spacing:-.075em;margin-bottom:18px}
+  .flow-heading p{font-size:13px;line-height:1.55;max-width:340px}
+  .flow-heading p .flow-lead{font-size:16px;line-height:1.35;margin-bottom:1em}
+  .flow-stage{height:480px;margin-top:14px}
+  .send-ticket{top:8px;width:calc(100% - 4px);padding:12px 11px;gap:10px}
+  .send-ticket small{font-size:8px}
+  .send-ticket strong{font-size:10px;line-height:1.25;margin-top:4px}
+  .main-line{top:104px;height:106px}
+  .branch-nodes{top:220px;height:245px}
+  .broker-stack{width:112px}
+  .broker-stack.broker-left{left:0;top:72px}
+  .broker-stack.broker-center{left:50%;top:124px}
+  .broker-stack.broker-right{right:0;top:72px}
+  .broker-node.logo-node{width:78px!important;height:78px!important}
+  .broker-logo{width:70px;height:70px}
+  .broker-stack.broker-center .broker-logo{width:70px;height:70px}
+  .logo-halo{width:82px;height:82px}
+  .broker-stack.broker-center .logo-halo{width:82px;height:82px}
+  .order-popup{width:112px;max-width:112px;margin-top:7px;padding:7px 6px;gap:5px;justify-content:center}
+  .order-popup strong{font-size:7px;line-height:1.2;white-space:normal;text-align:left}
+  .order-check{width:16px;height:16px}
+  .order-check svg{width:11px;height:11px}
+  .broker-stack .flow-tagline{width:158px;margin-top:12px;font-size:10px;line-height:1.35;text-align:center}
+  .success-badge{bottom:0;left:50%;padding:10px 14px;gap:8px}
+  .success-badge>svg{width:25px;height:25px}
+  .success-badge strong{font-size:10px}
+  .success-badge small{font-size:7px}
+}
