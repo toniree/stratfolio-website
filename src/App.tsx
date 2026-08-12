@@ -3,13 +3,14 @@ import { ArrowRight, BrainCircuit, ChartNoAxesCombined, Check, Layers3, ShieldCh
 import { useRef } from 'react'
 
 const installUrl = 'https://toniree.github.io/stratfolio-app/'
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`
 
 const Fade = ({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => (
   <motion.div className={className} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .72, delay, ease: [0.16, 1, 0.3, 1] }}>{children}</motion.div>
 )
 
 function Brand() {
-  return <a href="#top" className="brand" aria-label="StratFolio home"><img src="/brand-mark.svg" alt="" /><span>Strat<span>Folio</span></span></a>
+  return <a href="#top" className="brand" aria-label="StratFolio home"><img src={asset('brand-mark.svg')} alt="" /><span>Strat<span>Folio</span></span></a>
 }
 
 function HorseMark() {
@@ -25,7 +26,7 @@ function InstallCard({ floating = false, nav = false }: { floating?: boolean; na
     if ('vibrate' in navigator) navigator.vibrate(35)
   }
   return <motion.a href={nav ? undefined : installUrl} target={nav ? undefined : '_blank'} rel={nav ? undefined : 'noreferrer'} className={`install-card ${floating ? 'install-float' : ''} ${nav ? 'nav-install' : ''}`} onPointerDown={nav ? undefined : hapticPress} onClick={nav ? undefined : hapticPress} aria-label="Install StratFolio demo on iOS or Android" initial={floating ? { opacity: 0, x: 30 } : undefined} animate={floating ? { opacity: 1, x: 0 } : undefined} transition={{ delay: 1.1 }}>
-    <img src="/install-qr.png" alt="QR code to install StratFolio" />
+    <img src={asset('install-qr.png')} alt="QR code to install StratFolio" />
     <div><strong>{nav ? <>Install demo<br />on iOS/Android</> : <>Try StratFolio<br />on your mobile today</>}</strong><small><span className="desktop-install">Scan to install</span><span className="mobile-install">Press to install</span> <ArrowRight size={13} /></small></div>
   </motion.a>
 }
@@ -50,10 +51,10 @@ function TradeFlow() {
   const mainLineOpacity = useTransform(scrollYProgress, [0.1, 0.25], [0, 1])
   return <section className="trade-flow" ref={ref}>
     <div className="flow-sticky">
-      <div className="flow-heading"><span className="section-num">01 — ONE TRADE, EVERYWHERE</span><h2>One clear move.<br /><em>Three connected books.</em></h2><p>Write the trade once. StratFolio routes the intent across every portfolio you manage—then keeps watching after the fill.</p></div>
+      <div className="flow-heading"><span className="section-num">01 — ONE TRADE, EVERYWHERE</span><h2><span className="flow-title-line">Say the rule. </span><em>StratFolio watches it.</em></h2><p><span className="flow-lead">Write the way you think.</span><span>StratFolio turns plain English into a monitored executable trade plan.<br />Approve the plan, and watch it execute across any of your brokerages once criteria are met.</span></p></div>
       <div className="flow-stage">
         <div className="flow-grid" />
-        <motion.div className="send-ticket" style={{ opacity: sendOpacity }}><span className="ticket-avatar"><UserRound size={14} /></span><div><small>USER TRADE RULE</small><strong>“trim semis when Kevin Warsh mentions rate hikes”</strong></div></motion.div>
+        <motion.div className="send-ticket" style={{ opacity: sendOpacity }}><span className="ticket-avatar"><UserRound size={14} /></span><div><small>USER TRADE RULE</small><strong>“trim semis when Fed says rate-hikes”</strong></div></motion.div>
         <motion.div className="flow-line main-line" style={{ scaleY: mainLineScale, opacity: mainLineOpacity, originY: 0 }} />
         <div className="branch-nodes">
           <div className="junction-node"><HorseMark /><motion.span className="junction-glow" style={{ opacity: junctionGlowOpacity }} /></div>
@@ -110,9 +111,9 @@ export function App() {
       </div>
       <motion.div className="hero-media" style={{ y: heroY }}>
         <div className="orb orb-one" /><div className="orb orb-two" />
-        <div className="mobile-screens" aria-label="StratFolio mobile app screens"><div className="mobile-screen screen-one"><img src="/m2-screen.png" alt="StratFolio portfolio plans screen" /></div><div className="mobile-screen screen-two"><img src="/m1-screen.png" alt="StratFolio marketwire screen" /></div><span className="dashboard-glow" /></div>
+        <div className="mobile-screens" aria-label="StratFolio mobile app screens"><div className="mobile-screen screen-one"><img src={asset('m2-screen.png')} alt="StratFolio portfolio plans screen" /></div><div className="mobile-screen screen-two"><img src={asset('desktop/m3.png')} alt="StratFolio position thesis dashboard" /></div><span className="dashboard-glow" /></div>
       </motion.div>
-      <div className="hero-qr" aria-label="Install StratFolio demo on iOS or Android"><img src="/install-qr.png" alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO<br />ON IOS/ANDROID</span></div>
+      <div className="hero-qr" aria-label="Install StratFolio demo on iOS or Android"><img src={asset('install-qr.png')} alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO<br />ON IOS/ANDROID</span></div>
       <a href="#bottom" className="scroll-mark" onClick={scrollToBottom}><span>SCROLL TO EXPLORE</span><i className="scroll-rail" aria-hidden="true"><b /><b /><b /></i></a>
     </section>
 
@@ -125,7 +126,7 @@ export function App() {
     <section className="feature-grid" id="intelligence">
       <Fade className="feature-card feature-wide">
         <div className="feature-copy"><span className="icon"><BrainCircuit /></span><p className="label">CONTEXT, NOT CHATTER</p><h3>Intelligence that knows your position.</h3><p>Ask a real portfolio question. Get an answer grounded in your contract, catalysts, conviction, and risk—not generic market commentary.</p><div className="quote">“When should I sell my PLTR calls?”<span>Analyzing 30 contracts · Jan 15 ’27 · $95 call</span></div></div>
-        <AppShot src="/thesis-bottom.png" alt="StratFolio position-specific AI analysis" />
+        <AppShot src={asset('desktop/m3.png')} alt="StratFolio position-specific AI analysis" />
       </Fade>
       <Fade className="feature-card stat-card" delay={.08}><span className="icon"><ChartNoAxesCombined /></span><p className="label">ONE CLEAR VIEW</p><h3>Every account.<br />One intelligent book.</h3><div className="broker-cloud"><span>Robinhood</span><span>Schwab</span><span>Fidelity</span><span>E*TRADE</span><span>Webull</span><span>IBKR</span></div></Fade>
       <Fade className="feature-card metric-card" delay={.14}><span className="metric">24/7</span><h3>Your thesis never clocks out.</h3><p>Continuous monitoring across price, news, catalysts, and every rule you approve.</p><div className="wave"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></Fade>
@@ -153,7 +154,7 @@ export function App() {
 
     <section className="film" id="film">
       <div className="film-heading"><Fade><span className="section-num">06 — SEE IT FOR REAL</span><h2>Built to feel alive.<br /><em>Because markets are.</em></h2></Fade><Fade delay={.1}><p>From the first position to the final plan, here is StratFolio working in the browser and in your hand.</p></Fade></div>
-      <Fade className="film-frame"><video src="/walkthrough.mp4" autoPlay muted loop playsInline poster="/social-preview.png" /><div className="film-label"><span className="pulse" /> LIVE PRODUCT WALKTHROUGH</div></Fade>
+      <Fade className="film-frame"><video src={asset('walkthrough.mp4')} autoPlay muted loop playsInline poster={asset('social-preview.png')} /><div className="film-label"><span className="pulse" /> LIVE PRODUCT WALKTHROUGH</div></Fade>
     </section>
 
     <section className="final-cta">
