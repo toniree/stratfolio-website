@@ -205,3 +205,80 @@ main{overflow:clip}
   .success-badge strong{font-size:10px}
   .success-badge small{font-size:7px}
 }
+
+/* ============================================================
+   Mobile-only touch-up pass. Desktop is intentionally untouched:
+   every rule below lives inside the 800px breakpoint. */
+@media(max-width:800px){
+  /* Page 1: lift the brand, headline, and copy to fill the page. */
+  .hero{min-height:0;height:100svh;padding-top:112px}
+  .hero-brand{top:30px}
+  .hero h1{transform:translateY(-6px);margin-bottom:16px}
+  .hero-copy>div>p{margin-bottom:12px}
+  .trust-row{margin-top:16px}
+  /* Page 1: phone mockups up + right, smaller so page 1 holds everything. */
+  .hero-media{top:452px;right:4%;width:260px;height:320px}
+  .mobile-screens{width:380px;height:430px;right:-58px;top:-24px}
+  .mobile-screen{width:176px;height:352px;border-width:4px;border-radius:28px}
+  .screen-one{left:18px;top:30px}
+  .screen-two{right:8px;top:0}
+  /* Page 1: no QR code on mobile. */
+  .hero-qr{display:none}
+
+  /* Trade-flow page: smaller centered rule ticket, line starts at its
+     bottom edge, horse + brokers lifted, no success badge. */
+  .send-ticket{width:272px;left:0;right:0;margin:auto;top:6px;padding:10px 12px;gap:8px}
+  .send-ticket>div{transform:translateY(-5px)}
+  .send-ticket small{font-size:9.6px}
+  .main-line{top:64px;height:76px}
+  .branch-nodes{top:140px;height:245px}
+  /* Move the complete five-part routing diagram down as one unit. The stage's
+     42px offset plus the ticket's 6px inset triples the former 16px gap. */
+  .flow-stage{height:420px;margin-top:42px}
+  .success-badge{display:none}
+  /* Stretch the branch lines so they land on the brokerage logos. */
+  .branch-lines .line-a{width:calc(42% - 18px);transform:rotate(141deg)}
+  .branch-lines .line-c{width:calc(42% - 18px);transform:rotate(39deg)}
+  .branch-lines .line-b{width:170px}
+
+  /* Perpetual-motion page: forge animation (logos rise, disintegrate into
+     sparks, get absorbed by the hovering StratFolio horse). */
+  .matrix-forge{overflow:visible}
+  .forge-canvas{position:absolute;z-index:6;inset:0;pointer-events:none}
+  .forge-horse{position:absolute;z-index:5;left:50%;top:14px;width:62px;height:62px;margin-left:-31px;display:grid;place-items:center;border:1px solid rgba(77,152,255,.8);border-radius:50%;background:rgba(8,17,31,.94);box-shadow:0 0 0 5px rgba(77,152,255,.1),0 0 26px rgba(77,152,255,.5);animation:forge-hover 4.2s ease-in-out infinite}
+  .forge-horse .horse-mark{width:32px;height:32px}
+  .forge-horse .horse-trace,.forge-horse .horse-detail{animation:none;stroke-dashoffset:0;opacity:1}
+  .forge-horse .horse-trace-soft{opacity:.6}
+  .forge-horse-glow{position:absolute;z-index:-1;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(120,190,255,.6),transparent 70%);opacity:.3;filter:blur(3px);transition:opacity .25s ease}
+  @keyframes forge-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+  .forge-pop{animation:none!important;margin-left:-34px;margin-top:-34px;opacity:0}
+  .forge-pop:before,.forge-pop:after,.forge-pops:before{content:none!important;animation:none!important}
+
+  /* Market Data Stream container: animated machine-code readout. */
+  .code-readout{width:206px;gap:5px}
+  .code-readout .code-line{font:400 8.5px/1.5 DM Mono,monospace;color:#9fe8c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:code-line-in .3s ease}
+  .code-readout .code-line-new{color:#c9f7e2;text-shadow:0 0 7px rgba(88,231,175,.55)}
+  .code-caret{display:inline-block;width:5px;height:9px;margin-left:4px;background:#58e7af;vertical-align:-1px;animation:code-caret-blink .85s steps(1) infinite}
+  @keyframes code-line-in{from{opacity:0;transform:translateY(5px)}to{transform:translateY(0)}}
+  @keyframes code-caret-blink{50%{opacity:0}}
+
+  /* Compact, centered mobile footer. */
+  footer{padding:34px 20px 22px;gap:14px;text-align:center}
+  footer>.brand,footer>div{justify-self:center}
+  footer>p{font-size:12px}
+  footer>small{padding-top:14px;line-height:1.5}
+
+  /* Hollow StratFolio mark in the final CTA kicker. */
+  .final-cta .kicker .horse-mark{width:14px;height:14px;transform:none;filter:none}
+  .final-cta .kicker .horse-trace:not(.horse-trace-soft){stroke:currentColor;stroke-width:1.5;stroke-dashoffset:0;animation:none;vector-effect:non-scaling-stroke}
+  .final-cta .kicker .horse-trace-soft,.final-cta .kicker .horse-detail{display:none}
+  .final-kicker-mark,.final-kicker-label{position:relative}
+  .final-kicker-mark{display:flex;color:#91bcff}
+  .final-kicker-mark-trace{position:absolute;inset:0;color:#4d98ff;filter:drop-shadow(0 0 4px rgba(54,134,255,.95));pointer-events:none;-webkit-mask:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent) no-repeat;mask:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent) no-repeat;-webkit-mask-size:55% 100%;mask-size:55% 100%;animation:final-mark-trace 1.65s ease-in-out infinite}
+  .final-kicker-label:after{content:attr(data-text);position:absolute;inset:0;color:#4d98ff;text-shadow:0 0 5px rgba(54,134,255,.95);pointer-events:none;-webkit-mask:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent) no-repeat;mask:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent) no-repeat;-webkit-mask-size:28% 100%;mask-size:28% 100%;animation:final-label-trace 1.65s ease-in-out infinite}
+  @keyframes final-mark-trace{0%,10%{-webkit-mask-position:-80% 0;mask-position:-80% 0;opacity:0}13%{opacity:1}30%{-webkit-mask-position:180% 0;mask-position:180% 0;opacity:1}34%,100%{-webkit-mask-position:180% 0;mask-position:180% 0;opacity:0}}
+  @keyframes final-label-trace{0%,20%{-webkit-mask-position:-40% 0;mask-position:-40% 0;opacity:0}23%{opacity:1}55%{-webkit-mask-position:140% 0;mask-position:140% 0;opacity:1}60%,100%{-webkit-mask-position:140% 0;mask-position:140% 0;opacity:0}}
+
+  .final-install .install-card{flex-direction:column;justify-content:center;gap:10px;text-align:center}
+  .final-install .install-card>div{align-items:center;text-align:center}
+}
