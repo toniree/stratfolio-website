@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, type MotionValue } from 'framer-motion'
-import { ArrowRight, BrainCircuit, ChartNoAxesCombined, Check, Layers3, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { ArrowRight, BrainCircuit, ChartNoAxesCombined, Check, Sparkles, UserRound } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 function useIsMobile() {
@@ -15,13 +15,15 @@ function useIsMobile() {
 
 const installUrl = 'https://toniree.github.io/stratfolio-app/'
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+const TOP_ANCHOR = 'top'
+const BOTTOM_ANCHOR = 'bottom'
 
 const Fade = ({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => (
   <motion.div className={className} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .72, delay, ease: [0.16, 1, 0.3, 1] }}>{children}</motion.div>
 )
 
 function Brand() {
-  return <a href="#top" className="brand" aria-label="StratFolio home"><img src={asset('brand-mark.svg')} alt="" /><span>Strat<span>Folio</span></span></a>
+  return <a href={`#${TOP_ANCHOR}`} className="brand" aria-label="StratFolio home"><img src={asset('brand-mark.svg')} alt="" /><span>Strat<span>Folio</span></span></a>
 }
 
 function HorseMark() {
@@ -90,14 +92,29 @@ function Broker({ position, name, logo, order, highlightProgress, orderProgress,
   return <div className={`broker-stack ${position}`}><div className="broker-node logo-node"><motion.svg className="logo-halo" viewBox="0 0 100 100" aria-hidden="true" style={{ opacity: 1, x: '-50%', y: '-50%', rotate: highlightRotation }}><motion.circle cx="50" cy="50" r="46" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ pathLength: highlightProgress, stroke: highlightColor, color: highlightColor }} /></motion.svg><img className="broker-logo" src={logo} alt={`${name} logo`} /></div><motion.div className="order-popup" style={{ scale: orderProgress, opacity: orderProgress }}><motion.span className="order-check" style={{ boxShadow: orderGlowShadow }}><Check size={14} strokeWidth={2.5} /></motion.span><strong>{order}</strong></motion.div>{position === 'broker-center' && <motion.p className="flow-tagline" style={{ opacity: messageProgress }}>That’s how easy it is to manage<br /><em>all your portfolios, 24/7.</em></motion.p>}</div>
 }
 
+const GoogleG = () => <svg viewBox="0 0 48 48" aria-hidden="true">
+  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+</svg>
+
+const AmazonA = () => <i className="glyph glyph-amazon-forge">a<svg viewBox="0 0 44 16" aria-hidden="true">
+  <path d="M3 3c10.5 9 27.5 9 37-1.5" fill="none" stroke="#ff9900" strokeWidth="3" strokeLinecap="round" />
+  <path d="M40.2 0l1.6 7.2-7-1.6z" fill="#ff9900" />
+</svg></i>
+
+const AppleMark = () => <svg viewBox="0 0 814 1000" aria-hidden="true">
+  <path fill="#f2f6fb" d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.5 0 130.9 2.6 198.3 99.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z" />
+</svg>
+
 const FORGE_POPS = [
   { cls: 'pop-tesla', label: 'Tesla logo', glyph: <i className="glyph glyph-tesla">T</i> },
-  { cls: 'pop-google', label: 'Google logo', glyph: <i className="glyph glyph-google">G</i> },
+  { cls: 'pop-google', label: 'Google logo', glyph: <i className="glyph glyph-google-classic"><GoogleG /></i> },
   { cls: 'pop-nvidia', label: 'Nvidia logo', glyph: <i className="glyph glyph-nvidia" /> },
-  { cls: 'pop-trump', label: 'Donald Trump market commentary', glyph: <i className="glyph glyph-avatar">DT</i> },
-  { cls: 'pop-amazon', label: 'Amazon logo', glyph: <i className="glyph glyph-amazon">a</i> },
+  { cls: 'pop-apple', label: 'Apple logo', glyph: <i className="glyph glyph-apple"><AppleMark /></i> },
+  { cls: 'pop-amazon', label: 'Amazon logo', glyph: <AmazonA /> },
   { cls: 'pop-news', label: 'News headline', glyph: <i className="glyph glyph-news" /> },
-  { cls: 'pop-cramer', label: 'Jim Cramer market commentary', glyph: <i className="glyph glyph-avatar">JC</i> },
 ]
 
 const SPARK_COLORS = ['#dff7ff', '#63c3ff', '#a98dff', '#45d7ab', '#ffffff', '#8ecbff']
@@ -128,9 +145,9 @@ function MatrixForge() {
     const cycle = setInterval(() => {
       i = (i + 1) % FORGE_POPS.length
       setActive(i)
-      burstTimer = setTimeout(() => spawnBurst(i), 2050)
-    }, 3300)
-    burstTimer = setTimeout(() => spawnBurst(0), 2050)
+      burstTimer = setTimeout(() => spawnBurst(i), 1000)
+    }, 1250)
+    burstTimer = setTimeout(() => spawnBurst(0), 1000)
     return () => { clearInterval(cycle); clearTimeout(burstTimer) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -147,14 +164,14 @@ function MatrixForge() {
     const tx = hb.left - vb.left + hb.width / 2
     const ty = hb.top - vb.top + hb.height / 2
     const sparks = sparksRef.current
-    for (let s = 0; s < 64; s++) {
+    for (let s = 0; s < 48; s++) {
       const a = Math.random() * Math.PI * 2
       const r = Math.random() * pb.width * 0.45
       sparks.push({
         x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.8,
         vx: (Math.random() - 0.5) * 46, vy: -18 - Math.random() * 60,
         tx: tx + (Math.random() - 0.5) * 14, ty: ty + (Math.random() - 0.5) * 10,
-        born: now + Math.random() * 260, ttl: 1500 + Math.random() * 700,
+        born: now + Math.random() * 160, ttl: 1200 + Math.random() * 500,
         size: 0.6 + Math.random() * 1.7,
         color: SPARK_COLORS[(Math.random() * SPARK_COLORS.length) | 0],
         twinklePhase: Math.random() * Math.PI * 2, twinkleFreq: 6 + Math.random() * 9,
@@ -235,7 +252,7 @@ function MatrixForge() {
         animate={active === i
           ? { opacity: [0, 1, 1, 1, 0], y: [26, 0, -6, -44, -50], scale: [0.4, 1, 1.03, 1.05, 0.5], filter: ['blur(3px)', 'blur(0px)', 'blur(0px)', 'blur(0px)', 'blur(3px)'] }
           : { opacity: 0, y: 26, scale: 0.4, filter: 'blur(3px)', transition: { duration: 0.01 } }}
-        transition={active === i ? { duration: 2.35, times: [0, 0.22, 0.42, 0.87, 1], ease: 'easeInOut' } : undefined}
+        transition={active === i ? { duration: 1.15, times: [0, 0.26, 0.45, 0.85, 1], ease: 'easeInOut' } : undefined}
       >{p.glyph}</motion.span>)}
     </div>
     <canvas className="forge-canvas" ref={canvasRef} />
@@ -263,12 +280,12 @@ const MACHINE_CHUNKS = [
 function MachineStream() {
   const [head, setHead] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setHead(h => (h + 1) % MACHINE_CHUNKS.length), 850)
+    const t = setInterval(() => setHead(h => (h + 1) % MACHINE_CHUNKS.length), 700)
     return () => clearInterval(t)
   }, [])
-  const lines = Array.from({ length: 5 }, (_, i) => MACHINE_CHUNKS[(head - (4 - i) + MACHINE_CHUNKS.length * 2) % MACHINE_CHUNKS.length])
-  return <div className="matrix-readout code-readout"><span>MARKET DATA STREAM</span><strong>LIVE <i>●</i></strong>
-    {lines.map((l, i) => <small key={`${head}-${i}`} className={i === 4 ? 'code-line code-line-new' : 'code-line'} style={{ opacity: 0.3 + i * 0.175 }}>{l}{i === 4 && <b className="code-caret" />}</small>)}
+  const lines = Array.from({ length: 3 }, (_, i) => MACHINE_CHUNKS[(head - (2 - i) + MACHINE_CHUNKS.length * 2) % MACHINE_CHUNKS.length])
+  return <div className="matrix-readout code-readout"><span>MARKET DATA STREAM</span>
+    {lines.map((l, i) => <small key={`${head}-${i}`} className={i === 2 ? 'code-line code-line-new' : 'code-line'} style={{ opacity: 0.35 + i * 0.3 }}>{l}{i === 2 && <b className="code-caret" />}</small>)}
   </div>
 }
 
@@ -296,7 +313,7 @@ export function App() {
     requestAnimationFrame(animate)
   }
 
-  return <main id="top">
+  return <main id={TOP_ANCHOR}>
     <div className="noise" />
     <section className="hero">
       <div className="hero-brand"><Brand /></div>
@@ -310,42 +327,22 @@ export function App() {
         <div className="mobile-screens" aria-label="StratFolio mobile app screens"><div className="mobile-screen screen-one"><img src={asset('m2-screen.png')} alt="StratFolio portfolio plans screen" /></div><div className="mobile-screen screen-two"><img src={asset('desktop/m3.png')} alt="StratFolio position thesis dashboard" /></div><span className="dashboard-glow" /></div>
       </motion.div>
       <div className="hero-qr" aria-label="Install StratFolio demo on iOS or Android"><img src={asset('install-qr.png')} alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO<br />ON IOS/ANDROID</span></div>
-      <a href="#bottom" className="scroll-mark" onClick={scrollToBottom}><span>SCROLL TO EXPLORE</span><i className="scroll-rail" aria-hidden="true"><b /><b /><b /></i></a>
+      <a href={`#${BOTTOM_ANCHOR}`} className="scroll-mark" onClick={scrollToBottom}><span>SCROLL TO EXPLORE</span><i className="scroll-rail" aria-hidden="true"><b /><b /><b /></i></a>
     </section>
 
     <TradeFlow mobile={isMobile} />
 
     {isMobile && <DataMatrix mobile />}
 
-    <section className="statement">
-      <Fade><span className="section-num">01 — THE IDEA</span><h2>Your portfolio tells you <i>what happened.</i><br />StratFolio tells you <em>what to do next.</em></h2></Fade>
-    </section>
+    <div className="feature-section-label"><Fade><span className="section-num">03 — NEW ERA OF TRADING</span></Fade></div>
 
     <section className="feature-grid" id="intelligence">
       <Fade className="feature-card feature-wide">
-        <div className="feature-copy"><span className="icon"><BrainCircuit /></span><p className="label">CONTEXT, NOT CHATTER</p><h3>Intelligence that knows your position.</h3><p>Ask a real portfolio question. Get an answer grounded in your contract, catalysts, conviction, and risk—not generic market commentary.</p><div className="quote">“When should I sell my PLTR calls?”<span>Analyzing 30 contracts · Jan 15 ’27 · $95 call</span></div></div>
+        <div className="feature-copy"><span className="icon"><BrainCircuit /></span><p className="label">CONTEXT, NOT CHATTER</p><h3>Intelligence that knows your position.</h3><p>Ask a real portfolio question. Get an answer grounded in your contract, catalysts, conviction, and risk—not generic market commentary.</p></div>
         <AppShot src={asset('desktop/m3.png')} alt="StratFolio position-specific AI analysis" />
       </Fade>
       <Fade className="feature-card stat-card" delay={.08}><span className="icon"><ChartNoAxesCombined /></span><p className="label">ONE CLEAR VIEW</p><h3>Every account.<br />One intelligent book.</h3><div className="broker-cloud"><span>Robinhood</span><span>Schwab</span><span>Fidelity</span><span>E*TRADE</span><span>Webull</span><span>IBKR</span></div></Fade>
       <Fade className="feature-card metric-card" delay={.14}><span className="metric">24/7</span><h3>Your thesis never clocks out.</h3><p>Continuous monitoring across price, news, catalysts, and every rule you approve.</p><div className="wave"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></Fade>
-    </section>
-
-    <section className="plans" id="plans">
-      <div className="plans-intro"><Fade><span className="section-num">03 — FROM THESIS TO ACTION</span><h2>Say the rule.<br /><em>StratFolio watches it.</em></h2><p>Write the way you think. StratFolio turns plain English into a monitored, explainable plan that never acts without your authorization.</p></Fade></div>
-      <div className="plan-stack">
-        <Fade className="rule-card"><span className="rule-index">01</span><div><small>YOU TYPE</small><p>“Trim 50% when PLTR is around $195.”</p></div><span className="status">DRAFT</span></Fade>
-        <Fade className="rule-card" delay={.08}><span className="rule-index">02</span><div><small>STRATFOLIO MONITORS</small><p>Price, catalyst, conviction &amp; risk.</p></div><span className="status watching">WATCHING</span></Fade>
-        <Fade className="rule-card" delay={.16}><span className="rule-index">03</span><div><small>YOU STAY IN CONTROL</small><p>Review the signal. Authorize the action.</p></div><span className="status ready">READY</span></Fade>
-      </div>
-    </section>
-
-    <section className="platform" id="platform">
-      <Fade><div className="platform-title"><span className="section-num">04 — ENGINEERED TO SCALE</span><h2>A prototype with<br /><em>production bones.</em></h2></div></Fade>
-      <div className="platform-grid">
-        <Fade className="platform-card"><Layers3 /><h3>Transport-agnostic</h3><p>Typed API boundaries keep every component independent from the data source. Real services are a swap—not a rewrite.</p><code>React · TypeScript · Query · Zustand</code></Fade>
-        <Fade className="platform-card" delay={.08}><ShieldCheck /><h3>Human-authorized</h3><p>AI proposes. The investor approves. Execution state is explicit, auditable, and constrained by risk controls.</p><code>draft → watching → ready</code></Fade>
-        <Fade className="platform-card architecture" delay={.16}><span>PLATFORM VISION</span><div className="arch-row"><b>Java</b><i /><b>Go</b><i /><b>Python</b><i /><b>AI</b></div><p>Strongly consistent trades, real-time market intelligence, quantitative models, and an agent layer designed for controlled action.</p></Fade>
-      </div>
     </section>
 
     {!isMobile && <DataMatrix />}
@@ -361,6 +358,6 @@ export function App() {
       <Fade delay={.12} className="final-install"><InstallCard /></Fade>
     </section>
 
-    <footer id="bottom"><Brand /><p>{isMobile ? 'AI-native financial intelligence platform.' : 'AI-native trading intelligence, built with intention.'}</p><div>{!isMobile && <a href="https://github.com/toniree/stratfolio-app" target="_blank" rel="noreferrer">GitHub</a>}<span>© 2026 StratFolio</span></div><small>Everything in this demo is simulated. Not investment advice. No orders leave the browser.</small></footer>
+    <footer id={BOTTOM_ANCHOR}><Brand /><p>{isMobile ? 'AI-native financial intelligence platform.' : 'AI-native trading intelligence, built with intention.'}</p><div>{!isMobile && <a href="https://github.com/toniree/stratfolio-app" target="_blank" rel="noreferrer">GitHub</a>}<span>© 2026 StratFolio</span></div><small>Everything in this demo is simulated. Not investment advice. No orders leave the browser.<span className="footer-trademark">All third-party trademarks (including Google) are property of their respective owners and used for demonstration purposes only.</span></small></footer>
   </main>
 }
