@@ -298,7 +298,7 @@ main{overflow:clip}
 .flow-canvas{position:absolute;z-index:2;inset:0;pointer-events:none}
 .flow-node{position:absolute;z-index:4;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
 .flow-node .order-popup{margin:0}
-.flow-node .flow-tagline{width:250px;margin:14px 0 0;color:#dce9f7;font-size:13px;line-height:1.55;text-align:center;text-shadow:0 0 10px rgba(175,215,255,.22)}
+.flow-node .flow-tagline{width:max-content;white-space:nowrap;margin:14px 0 0;color:#dce9f7;font-size:13px;line-height:1.55;text-align:center;text-shadow:0 0 10px rgba(175,215,255,.22)}
 .flow-node .flow-tagline em{font-style:normal;color:#9bc9ff;text-shadow:0 0 12px rgba(110,180,255,.55)}
 .trade-flow .send-ticket{z-index:5}
 @media(min-width:801px){
@@ -307,6 +307,6 @@ main{overflow:clip}
   .trade-flow .success-badge{z-index:5;bottom:auto;top:55%;left:auto;right:0;transform-origin:center}
 }
 @media(max-width:800px){
-  .flow-node .flow-tagline{width:170px;margin-top:10px;font-size:10.5px;line-height:1.4}
+  .flow-node .flow-tagline{width:max-content;margin-top:10px;font-size:10.5px;line-height:1.4}
   .trade-flow .success-badge{display:none}
 }

@@ -425,7 +425,7 @@ function FlowNode({ broker, index, mobile, progress, taglineOpacity }: { broker:
   const side = index === 0 ? 'flow-node-left' : index === 2 ? 'flow-node-right' : ''
   return <div className={`flow-node ${side}`} style={{ left: `${(mobile ? broker.mx : broker.x) * 100}%`, top: `calc(${mobile ? (index === 1 ? 74.5 : 65.5) : (index === 1 ? 84 : 68)}% + 46px)` }}>
     <motion.div className="order-popup" style={{ scale: chip, opacity: chip }}><motion.span className="order-check" style={{ boxShadow: glowShadow }}><Check size={14} strokeWidth={2.5} /></motion.span><strong>{broker.order}</strong></motion.div>
-    {taglineOpacity && <motion.p className="flow-tagline" style={{ opacity: taglineOpacity }}>That’s how easy it is to manage<br /><em>all your portfolios, 24/7.</em></motion.p>}
+    {taglineOpacity && <motion.p className="flow-tagline" style={{ opacity: taglineOpacity }}>That’s how easy it is to manage <em>all your portfolios, 24/7.</em></motion.p>}
   </div>
 }
 
@@ -447,7 +447,7 @@ const GOOGLE_PATHS: Array<[string, string]> = [
   ['#34A853', 'M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'],
 ]
 
-type FieldEmblem = { x: number; y: number; depth: number; step: number; bf: number; bp: number; w: number; h: number; crisp?: boolean; draw: (ctx: CanvasRenderingContext2D) => void }
+type FieldEmblem = { x: number; y: number; my?: number; depth: number; step: number; bf: number; bp: number; w: number; h: number; crisp?: boolean; draw: (ctx: CanvasRenderingContext2D) => void }
 
 const FIELD_EMBLEMS: FieldEmblem[] = [
   {
@@ -506,7 +506,7 @@ const FIELD_EMBLEMS: FieldEmblem[] = [
     },
   },
   {
-    x: .68, y: .60, depth: 1, step: 3, bf: .36, bp: 5.5, w: 150, h: 150,
+    x: .68, y: .60, my: .56, depth: 1, step: 3, bf: .36, bp: 5.5, w: 150, h: 150,
     draw: ctx => {
       ctx.fillStyle = '#f2f6fb'
       ctx.font = '800 116px Manrope,system-ui,sans-serif'
@@ -522,7 +522,7 @@ const FIELD_EMBLEMS: FieldEmblem[] = [
     },
   },
   {
-    x: .38, y: .74, depth: 1, step: 2, bf: .6, bp: 2.8, w: 360, h: 60, crisp: true,
+    x: .41, y: .74, my: .66, depth: 1, step: 2, bf: .6, bp: 2.8, w: 360, h: 60, crisp: true,
     draw: ctx => {
       ctx.fillStyle = '#9fc4ff'
       ctx.font = '600 36px "DM Mono",monospace'
@@ -531,7 +531,7 @@ const FIELD_EMBLEMS: FieldEmblem[] = [
     },
   },
   {
-    x: .76, y: .78, depth: .95, step: 2, bf: .52, bp: .4, w: 240, h: 60, crisp: true,
+    x: .76, y: .78, my: .78, depth: .95, step: 2, bf: .52, bp: .4, w: 240, h: 60, crisp: true,
     draw: ctx => {
       ctx.fillStyle = '#7de3b3'
       ctx.font = '600 36px "DM Mono",monospace'
@@ -585,7 +585,7 @@ const sampleEmblems = () => {
           r: data[i], g: data[i + 1], b: data[i + 2],
           gr: glow[0], gg: glow[1], gb: glow[2],
           size: spec.crisp ? 1 + Math.random() * .5 : 1.5 + Math.random() * 1.3,
-          delay: .24 + e * .04 + Math.random() * .07,
+          delay: .40 + e * .035 + Math.random() * .05,
           sx: Math.cos(a) * mag, sy: Math.sin(a) * mag - 70,
           phase: Math.random() * TAU,
         })
@@ -690,7 +690,7 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
             r: c[0], g: c[1], b: c[2],
             phase: Math.random() * TAU,
             liftX: (Math.random() - .5) * 160, liftY: 60 + Math.random() * 140,
-            delay: .3 + Math.random() * .2,
+            delay: .44 + Math.random() * .18,
           })
         }
       }
@@ -709,12 +709,12 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
       const p = progress.get()
       parX += (pointerX - parX) * .04
       parY += (pointerY - parY) * .04
-      horseEl.style.opacity = String(smooth((p - .8) / .12))
-      horseEl.style.transform = `scale(${.9 + .1 * smooth((p - .8) / .15)})`
-      if (glowRef.current) glowRef.current.style.opacity = String(.9 * smooth((p - .55) / .37))
-      if (readoutRef.current) readoutRef.current.style.opacity = String(1 - smooth((p - .35) / .15))
+      horseEl.style.opacity = String(smooth((p - .84) / .1))
+      horseEl.style.transform = `scale(${.9 + .1 * smooth((p - .84) / .12)})`
+      if (glowRef.current) glowRef.current.style.opacity = String(.9 * smooth((p - .62) / .32))
+      if (readoutRef.current) readoutRef.current.style.opacity = String(1 - smooth((p - .44) / .14))
       if (captionRef.current) {
-        const c = smooth((p - .9) / .085)
+        const c = smooth((p - .93) / .06)
         captionRef.current.style.opacity = String(c)
         captionRef.current.style.transform = `translateX(-50%) translateY(${(1 - c) * 14}px)`
       }
@@ -725,13 +725,13 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
         const s = FIELD_EMBLEMS[e]
         // Desktop stages are shorter relative to glyph size, so compress the
         // field downward to keep the top row clear of the stage edge.
-        const ey = narrow.matches ? s.y : .09 + s.y * .86
+        const ey = narrow.matches ? .12 + (s.my ?? s.y) * .82 : .09 + s.y * .86
         ecx[e] = s.x * W + Math.sin(t * s.bf + s.bp) * 13 * s.depth * amp + parX * 16 * s.depth * amp
         ecy[e] = ey * H + Math.cos(t * s.bf * .8 + s.bp * 1.7) * 9 * s.depth * amp + parY * 12 * s.depth * amp
       }
       const roll = amp ? t : 0
       for (const d of ground) {
-        const q = smooth((p - d.delay) / .38)
+        const q = smooth((p - d.delay) / .32)
         if (q >= 1) continue
         const dir = d.row % 2 ? 1 : -1
         const u = (d.u + roll * .006 * dir * (.4 + d.t) + 8) % 1
@@ -744,7 +744,7 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
         const gs = d.size * (1 - q * .5)
         ctx.fillRect(x - gs / 2, y - gs / 2, gs, gs)
       }
-      const endFade = 1 - .8 * smooth((p - .86) / .1)
+      const endFade = 1 - .8 * smooth((p - .9) / .08)
       for (const pt of parts) {
         const spec = FIELD_EMBLEMS[pt.e]
         const ds = spec.depth
@@ -752,7 +752,7 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
         const bs = spec.crisp ? Math.max(scale, .78) : scale
         const hx = ecx[pt.e] + pt.lx * bs * ds
         const hy = ecy[pt.e] + pt.ly * bs * ds
-        const q = smooth((p - pt.delay) / .3)
+        const q = smooth((p - pt.delay) / .24)
         let x: number, y: number, r: number, g: number, b: number, al: number, size: number
         if (q <= 0) {
           const wob = (spec.crisp ? .35 : 1.6) * amp
