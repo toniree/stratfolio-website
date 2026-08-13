@@ -13,7 +13,7 @@ function useIsMobile() {
   return mobile
 }
 
-const installUrl = 'https://toniree.github.io/stratfolio-app/'
+const installUrl = 'https://toniree.github.io/stratfolio-app/#/app/portfolio'
 const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`
 const TOP_ANCHOR = 'top'
 const BOTTOM_ANCHOR = 'bottom'
@@ -42,7 +42,7 @@ function HorseMark() {
 /* Full brand lockup for the signal-field finale: knight, chessboard
    plinth, and the one-zig market arrow with its filled head. */
 function HorseLogoFull() {
-  return <svg className="horse-mark" viewBox="40 40 390 390" aria-hidden="true">
+  return <svg className="horse-mark" viewBox="22 22 426 426" aria-hidden="true">
     <path className="horse-trace horse-trace-soft" d={HORSE_BODY} />
     <path className="horse-trace" d={HORSE_BODY} />
     <rect className="horse-trace horse-base" x="121" y="375" width="310" height="55" rx="18" />
@@ -65,48 +65,368 @@ function AppShot({ src, alt, className = '' }: { src: string; alt: string; class
   return <div className={`phone ${className}`}><div className="phone-speaker" /><img src={src} alt={alt} /></div>
 }
 
+/* ============================================================
+   Remix trade-flow: the user's rule dissolves into a particle
+   stream, feeds a dot-matrix horse, and the horse routes it out
+   as three arcing streams that assemble broker wordmarks and
+   stamp fulfilled orders beneath them. */
+
+type FlowBroker = { x: number; mx: number; text: string; logo: string; color: [number, number, number]; appear: number; order: string; keep: (r: number, g: number, b: number) => boolean; density: number; mute?: (r: number, g: number, b: number) => boolean }
+
+const FLOW_BROKERS: FlowBroker[] = [
+  // E*TRADE: purple/green asterisk on white — drop the white paper so the mark floats in the ring.
+  { x: .17, mx: .18, text: 'E*TRADE', logo: 'etrade-logo.jpg', color: [203, 184, 255], appear: .34, order: 'CLOSE 1x MU $500 CALL', keep: (r, g, b) => r < 225 || g < 225 || b < 225, density: 1 },
+  // Schwab: blue disc with white lettering — mute the disc so the letters pop.
+  { x: .50, mx: .50, text: 'Schwab', logo: 'schwab-mark.svg', color: [77, 184, 255], appear: .40, order: 'CLOSE 3x TSM $700 CALL', keep: () => true, density: .8, mute: (r, g, b) => b > 150 && r < 140 },
+  // Robinhood: black feather on neon green — the feather reads as negative space.
+  { x: .83, mx: .80, text: 'Robinhood', logo: 'robin.png', color: [94, 224, 165], appear: .46, order: 'CLOSE 2x AMD $600 CALL', keep: (r, g, b) => Math.max(r, g, b) > 70, density: .8 },
+]
+
+const qbez = (a: number, c: number, b: number, t: number) => {
+  const u = 1 - t
+  return u * u * a + 2 * u * t * c + t * t * b
+}
+
+type FlowNameDot = { b: number; lx: number; ly: number; st: number; ox: number; oy: number; d: number; size: number; phase: number; cr: number; cg: number; cb: number; mute: boolean }
+type FlowMote = { stream: number; born: number; dur: number; px: number; py: number; wobA: number; wobF: number; wobP: number; size: number; tint: number }
+type FlowSpark = { x: number; y: number; vx: number; vy: number; born: number; dur: number; c: [number, number, number] }
+
+const FLOW_LOGO_R = 54
+
+const loadLogo = (src: string) => new Promise<HTMLImageElement | null>(resolve => {
+  const img = new Image()
+  img.onload = () => resolve(img)
+  img.onerror = () => resolve(null)
+  img.src = src
+})
+
+/* Circle-crop a real brokerage logo and sample its pixels into dots,
+   keeping each dot's true brand color (dark pixels get lifted so they
+   read on the night background). */
+const sampleLogoDots = (img: HTMLImageElement | null, broker: FlowBroker) => {
+  const S = FLOW_LOGO_R * 2
+  const dots: { lx: number; ly: number; r: number; g: number; b: number; mute: boolean }[] = []
+  if (!img || !img.naturalWidth) return dots
+  const cv = document.createElement('canvas')
+  cv.width = S; cv.height = S
+  const ctx = cv.getContext('2d')
+  if (!ctx) return dots
+  ctx.beginPath()
+  ctx.arc(S / 2, S / 2, S / 2, 0, TAU)
+  ctx.clip()
+  const k = S / Math.min(img.naturalWidth, img.naturalHeight)
+  const dw = img.naturalWidth * k, dh = img.naturalHeight * k
+  ctx.drawImage(img, (S - dw) / 2, (S - dh) / 2, dw, dh)
+  const data = ctx.getImageData(0, 0, S, S).data
+  for (let y = 0; y < S; y += 2) for (let x = 0; x < S; x += 2) {
+    const i = (y * S + x) * 4
+    let r = data[i], g = data[i + 1], b = data[i + 2]
+    if (data[i + 3] < 100 || !broker.keep(r, g, b) || Math.random() > broker.density) continue
+    const mute = broker.mute?.(r, g, b) ?? false
+    const v = Math.max(r, g, b)
+    if (v > 0 && v < 130) { const f = 150 / v; r = Math.min(255, r * f + 16); g = Math.min(255, g * f + 16); b = Math.min(255, b * f + 16) }
+    dots.push({ lx: x - S / 2 + (Math.random() - .5) * .4, ly: y - S / 2 + (Math.random() - .5) * .4, r, g, b, mute })
+  }
+  return dots
+}
+
 function TradeFlow({ mobile = false }: { mobile?: boolean }) {
   const ref = useRef<HTMLElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const ticketRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const sendOpacity = useTransform(scrollYProgress, [0.04, 0.14], [0, 1])
-  const branchScale = useTransform(scrollYProgress, [0.45, 0.68], [0, 1])
-  const branchOpacity = useTransform(scrollYProgress, [0.45, 0.49], [0, 1])
-  const brokerHighlightProgress = useTransform(scrollYProgress, [0.68, 0.74], [0, 1])
-  const brokerOrderProgress = useTransform(scrollYProgress, [0.62, 0.72], [0, 1])
-  const followupMessageProgress = useTransform(scrollYProgress, [0.8, 0.86], [0, 1])
-  const checkScale = useTransform(scrollYProgress, [0.9, 1], [0, 1])
-  const checkOpacity = useTransform(scrollYProgress, [0.9, 0.98], [0, 1])
-  const junctionGlowOpacity = useTransform(scrollYProgress, [0.38, 0.45], [0, 1])
-  const mainLineScale = useTransform(scrollYProgress, [0.12, 0.42], [0, 1])
-  const mainLineOpacity = useTransform(scrollYProgress, [0.1, 0.25], [0, 1])
+  const sendOpacity = useTransform(scrollYProgress, [0.05, 0.12], [0, 1])
+  const taglineOpacity = useTransform(scrollYProgress, [0.68, 0.74], [0, 1])
+  const checkScale = useTransform(scrollYProgress, [0.74, 0.84], [0, 1])
+  const checkOpacity = useTransform(scrollYProgress, [0.74, 0.82], [0, 1])
+
+  useEffect(() => {
+    const stage = stageRef.current, canvas = canvasRef.current, ticket = ticketRef.current
+    if (!stage || !canvas || !ticket) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const narrow = window.matchMedia('(max-width:800px)')
+    let W = 0, H = 0, scale = 1
+    let horse = { cx: 0, cy: 0, s: 0 }
+    let ruleStart = { x: 0, y: 0 }
+    let brokerPos: { x: number; y: number }[] = []
+    let horseDots: { u: number; v: number; d: number; phase: number; size: number; c: number[] }[] = []
+    let nameDots: FlowNameDot[] = []
+    let motes: FlowMote[] = []
+    let sparks: FlowSpark[] = []
+    const acc = [0, 0, 0, 0]
+    const burstFired = [false, false, false]
+    let charge = 0
+    let raf = 0
+    let last = performance.now()
+    let alive = true
+
+    const resize = () => {
+      const b = stage.getBoundingClientRect()
+      W = b.width; H = b.height
+      canvas.width = W * dpr; canvas.height = H * dpr
+      canvas.style.width = `${W}px`; canvas.style.height = `${H}px`
+      scale = Math.max(.55, Math.min(1, Math.min(W / 880, H / 640)))
+      const s = Math.min(W, H) * .28
+      // Keep the head clear of the rule ticket above it.
+      horse = { cx: W * .5 - s * .096, cy: H * .53, s }
+      const tb = ticket.getBoundingClientRect()
+      ruleStart = { x: tb.left - b.left + tb.width / 2, y: tb.top - b.top + tb.height }
+      // The stage is a narrow column, so the rows stagger like a chess
+      // triangle: side wordmarks higher, the center one lower.
+      brokerPos = FLOW_BROKERS.map((bk, i) => ({
+        x: (narrow.matches ? bk.mx : bk.x) * W,
+        y: (narrow.matches ? (i === 1 ? .745 : .655) : (i === 1 ? .84 : .68)) * H,
+      }))
+    }
+
+    const build = async () => {
+      if (!alive) return
+      horseDots = sampleHorse().map(p => ({
+        u: p.u, v: p.v,
+        d: .1 + Math.random() * .1,
+        phase: Math.random() * TAU,
+        size: 1.2 + Math.random() * 1.2,
+        c: FIELD_GLOW[(Math.random() * FIELD_GLOW.length) | 0],
+      }))
+      const imgs = await Promise.all(FLOW_BROKERS.map(bk => loadLogo(asset(bk.logo))))
+      if (!alive) return
+      nameDots = []
+      FLOW_BROKERS.forEach((bk, b) => {
+        // dotted brand-color ring framing the circular badge
+        for (let i = 0; i < 72; i++) {
+          const a = (i / 72) * TAU
+          nameDots.push({
+            b, lx: Math.cos(a) * (FLOW_LOGO_R + 4), ly: Math.sin(a) * (FLOW_LOGO_R + 4),
+            st: .15 + Math.random() * .6,
+            ox: (Math.random() - .5) * 90, oy: (Math.random() - .5) * 70,
+            d: bk.appear + Math.random() * .03,
+            size: 1.3 + Math.random() * .4,
+            phase: Math.random() * TAU,
+            cr: bk.color[0], cg: bk.color[1], cb: bk.color[2],
+            mute: false,
+          })
+        }
+        for (const d of sampleLogoDots(imgs[b], bk)) {
+          nameDots.push({
+            b, lx: d.lx, ly: d.ly,
+            st: .15 + Math.random() * .6,
+            ox: (Math.random() - .5) * 90, oy: (Math.random() - .5) * 70,
+            d: bk.appear + .02 + Math.random() * .06,
+            size: .9 + Math.random() * .5,
+            phase: Math.random() * TAU,
+            cr: d.r, cg: d.g, cb: d.b,
+            mute: d.mute,
+          })
+        }
+      })
+    }
+
+    // Path endpoints are recomputed each frame from live layout so the
+    // streams always land exactly on the horse and wordmarks.
+    const paths = () => {
+      const rb = Math.max(scale, .75)
+      const routes = FLOW_BROKERS.map((_, r) => {
+        const p0 = { x: horse.cx + (r - 1) * horse.s * .3 + horse.s * .096, y: horse.cy + horse.s * .12 }
+        const p2 = { x: brokerPos[r].x, y: brokerPos[r].y - (FLOW_LOGO_R + 8) * rb }
+        const p1 = { x: (p0.x + p2.x) / 2, y: Math.min(p0.y, p2.y) - H * .1 }
+        return [p0, p1, p2]
+      })
+      const r0 = { x: ruleStart.x, y: ruleStart.y + 4 }
+      const r2 = { x: horse.cx + horse.s * .096, y: horse.cy - horse.s * .34 }
+      const rule = [r0, { x: (r0.x + r2.x) / 2 + 14, y: (r0.y + r2.y) / 2 }, r2]
+      return { rule, routes }
+    }
+
+    const spawn = (stream: number, rate: number, dt: number, now: number) => {
+      acc[stream] += rate * dt
+      while (acc[stream] >= 1) {
+        acc[stream] -= 1
+        motes.push({
+          stream, born: now, dur: stream === 0 ? 850 + Math.random() * 450 : 1050 + Math.random() * 420,
+          px: 0, py: 0,
+          wobA: 3 + Math.random() * 9, wobF: 3 + Math.random() * 4, wobP: Math.random() * TAU,
+          size: 1.1 + Math.random() * 1.5, tint: Math.random(),
+        })
+      }
+    }
+
+    const tick = (now: number) => {
+      if (!alive) return
+      raf = requestAnimationFrame(tick)
+      const dt = Math.min((now - last) / 1000, .05)
+      last = now
+      const t = now / 1000
+      const p = scrollYProgress.get()
+      const bs = Math.max(scale, .75)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, W, H)
+      ctx.globalCompositeOperation = 'lighter'
+      const { rule, routes } = paths()
+
+      // ---- horse: assembles from rising dust, brightens with charge
+      const glowA = .1 + charge * .22
+      const grad = ctx.createRadialGradient(horse.cx, horse.cy, 0, horse.cx, horse.cy, horse.s * .75)
+      grad.addColorStop(0, `rgba(96,170,255,${glowA})`)
+      grad.addColorStop(1, 'rgba(96,170,255,0)')
+      ctx.globalAlpha = 1
+      ctx.fillStyle = grad
+      ctx.fillRect(horse.cx - horse.s, horse.cy - horse.s, horse.s * 2, horse.s * 2)
+      for (const d of horseDots) {
+        const q = smooth((p - d.d) / .08)
+        if (q <= 0) continue
+        const tx = horse.cx - horse.s / 2 + d.u * horse.s
+        const ty = horse.cy - horse.s / 2 + d.v * horse.s
+        const x = tx + Math.sin(d.phase * 7) * 70 * (1 - q)
+        const y = ty + (H * .22 + Math.cos(d.phase * 3) * 40) * (1 - q)
+        const tw = .55 + .45 * Math.sin(t * (2 + charge * 3) + d.phase)
+        ctx.globalAlpha = Math.min(1, q * tw * (.6 + charge * .55))
+        ctx.fillStyle = `rgb(${d.c[0]},${d.c[1]},${d.c[2]})`
+        const sz = d.size * bs
+        ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz)
+      }
+
+      // ---- gates for the live streams
+      const gRule = smooth((p - .18) / .07) * (1 - smooth((p - .6) / .07))
+      const gates = FLOW_BROKERS.map((_, r) => smooth((p - (.3 + r * .05)) / .07) * (1 - smooth((p - .7) / .06)))
+      if (!reduced) {
+        spawn(0, gRule * 90, dt, now)
+        gates.forEach((g, r) => spawn(r + 1, g * 55, dt, now))
+      }
+
+      // ---- dotted guide paths
+      const guide = (pts: { x: number; y: number }[], a: number, c: string) => {
+        if (a <= 0) return
+        ctx.fillStyle = c
+        for (let i = 0; i <= 26; i++) {
+          const u = i / 26
+          ctx.globalAlpha = a * .16 * (.5 + .5 * Math.sin(t * 2.4 - u * 9))
+          ctx.fillRect(qbez(pts[0].x, pts[1].x, pts[2].x, u) - .8, qbez(pts[0].y, pts[1].y, pts[2].y, u) - .8, 1.6, 1.6)
+        }
+      }
+      guide(rule, gRule, '#9ecbff')
+      routes.forEach((r, i) => guide(r, gates[i], `rgb(${FLOW_BROKERS[i].color.join(',')})`))
+
+      // ---- comet motes with trails
+      for (let i = motes.length - 1; i >= 0; i--) {
+        const m = motes[i]
+        const mt = (now - m.born) / m.dur
+        if (mt >= 1) {
+          if (m.stream === 0) charge = Math.min(charge + .025, 1)
+          motes.splice(i, 1)
+          continue
+        }
+        const pts = m.stream === 0 ? rule : routes[m.stream - 1]
+        const e = mt * mt * (3 - 2 * mt)
+        let x = qbez(pts[0].x, pts[1].x, pts[2].x, e)
+        let y = qbez(pts[0].y, pts[1].y, pts[2].y, e)
+        const wob = Math.sin(mt * m.wobF * TAU + m.wobP) * m.wobA * Math.sin(mt * Math.PI)
+        x += wob
+        if (m.px === 0 && m.py === 0) { m.px = x; m.py = y }
+        let cr = 190, cg = 224, cb = 255
+        if (m.stream > 0) {
+          const c = FLOW_BROKERS[m.stream - 1].color
+          cr = 223 + (c[0] - 223) * e; cg = 243 + (c[1] - 243) * e; cb = 255 + (c[2] - 255) * e
+        }
+        ctx.globalAlpha = (.35 + .5 * Math.sin(mt * Math.PI)) * (m.tint > .5 ? 1 : .7)
+        ctx.strokeStyle = `rgb(${cr | 0},${cg | 0},${cb | 0})`
+        ctx.lineWidth = m.size
+        ctx.lineCap = 'round'
+        ctx.beginPath(); ctx.moveTo(m.px, m.py); ctx.lineTo(x, y); ctx.stroke()
+        m.px = x; m.py = y
+      }
+
+      // ---- circular broker badges assembling out of their streams
+      for (const nd of nameDots) {
+        const q = smooth((p - nd.d) / .09)
+        if (q <= 0) continue
+        const bp = brokerPos[nd.b]
+        const tx = bp.x + nd.lx * bs
+        const ty = bp.y + nd.ly * bs
+        let x = tx, y = ty
+        if (q < 1) {
+          const pts = routes[nd.b]
+          const sx = qbez(pts[0].x, pts[1].x, pts[2].x, nd.st) + nd.ox
+          const sy = qbez(pts[0].y, pts[1].y, pts[2].y, nd.st) + nd.oy
+          x = sx + (tx - sx) * q
+          y = sy + (ty - sy) * q
+        }
+        const rr = 223 + (nd.cr - 223) * q
+        const gg = 243 + (nd.cg - 243) * q
+        const bb = 255 + (nd.cb - 255) * q
+        ctx.globalAlpha = (q >= 1 ? .7 + .3 * Math.sin(t * 3 + nd.phase) : .95) * (nd.mute ? .4 : 1)
+        ctx.fillStyle = `rgb(${rr | 0},${gg | 0},${bb | 0})`
+        const sz = nd.size * Math.max(bs * .9, .7)
+        ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz)
+      }
+
+      // ---- confirmation bursts when each order stamps in
+      FLOW_BROKERS.forEach((bk, i) => {
+        const pc = .58 + i * .04
+        if (p >= pc && !burstFired[i]) {
+          burstFired[i] = true
+          for (let k = 0; k < 16; k++) {
+            const a = (k / 16) * TAU
+            const v = 60 + Math.random() * 90
+            sparks.push({ x: brokerPos[i].x, y: brokerPos[i].y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .7 - 20, born: now, dur: 550 + Math.random() * 250, c: bk.color })
+          }
+        }
+        if (p < pc - .06) burstFired[i] = false
+      })
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i]
+        const st = (now - s.born) / s.dur
+        if (st >= 1) { sparks.splice(i, 1); continue }
+        s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 60 * dt
+        ctx.globalAlpha = (1 - st) * .9
+        ctx.fillStyle = `rgb(${s.c[0]},${s.c[1]},${s.c[2]})`
+        ctx.fillRect(s.x - 1, s.y - 1, 2.2, 2.2)
+      }
+
+      charge = Math.max(charge - dt * .3, 0)
+    }
+
+    resize()
+    const ro = new ResizeObserver(resize)
+    ro.observe(stage)
+    build()
+    raf = requestAnimationFrame(tick)
+    return () => {
+      alive = false
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return <section className="trade-flow" ref={ref}>
     <div className="flow-sticky">
       <div className="flow-heading"><span className="section-num">01 — ONE TRADE, EVERYWHERE</span><h2><span className="flow-title-line">Say the rule. </span><em>StratFolio watches it.</em></h2>{mobile
         ? <p><span className="flow-lead">Write the way you think.</span><span>StratFolio turns plain English into an executable trade plan across all your brokerages.</span></p>
         : <p><span className="flow-lead">Write the way you think.</span><span>StratFolio turns plain English into a monitored executable trade plan.<br />Approve the plan, and watch it execute across any of your brokerages once criteria are met.</span></p>}</div>
-      <div className="flow-stage">
+      <div className="flow-stage" ref={stageRef}>
         <div className="flow-grid" />
-        <motion.div className="send-ticket" style={{ opacity: sendOpacity }}><span className="ticket-avatar"><UserRound size={14} /></span><div><small>USER TRADE RULE</small><strong>“trim semis when Fed says rate-hikes”</strong></div></motion.div>
-        <motion.div className="flow-line main-line" style={{ scaleY: mainLineScale, opacity: mainLineOpacity, originY: 0 }} />
-        <div className="branch-nodes">
-          <div className="junction-node"><HorseMark /><motion.span className="junction-glow" style={{ opacity: junctionGlowOpacity }} /></div>
-          <motion.div className="branch-lines" style={{ scale: branchScale, opacity: branchOpacity, originX: 0.5, originY: 0 }}><div className="branch-line line-a" /><div className="branch-line line-b" /><div className="branch-line line-c" /></motion.div>
-          <Broker position="broker-left" name="E*TRADE" logo="/etrade-logo.jpg" order="CLOSE 1x MU $500 CALL" highlightProgress={brokerHighlightProgress} orderProgress={brokerOrderProgress} messageProgress={followupMessageProgress} />
-          <Broker position="broker-center" name="Schwab" logo="/schwab-mark.svg" order="CLOSE 3x TSM $700 CALL" highlightProgress={brokerHighlightProgress} orderProgress={brokerOrderProgress} messageProgress={followupMessageProgress} />
-          <Broker position="broker-right" name="Robinhood" logo="/robin.png" order="CLOSE 2x AMD $600 CALL" highlightProgress={brokerHighlightProgress} orderProgress={brokerOrderProgress} messageProgress={followupMessageProgress} />
-        </div>
+        <canvas className="flow-canvas" ref={canvasRef} aria-hidden="true" />
+        <motion.div className="send-ticket" ref={ticketRef} style={{ opacity: sendOpacity }}><span className="ticket-avatar"><UserRound size={14} /></span><div><small>USER TRADE RULE</small><strong>“trim semis when Fed says rate-hikes”</strong></div></motion.div>
+        {FLOW_BROKERS.map((b, i) => <FlowNode key={b.text} broker={b} index={i} mobile={mobile} progress={scrollYProgress} taglineOpacity={i === 1 ? taglineOpacity : undefined} />)}
         <motion.div className="success-badge" style={{ scale: checkScale, opacity: checkOpacity }}><Check size={24} /><span><small>SUCCESS</small><strong>Trade fulfilled</strong></span></motion.div>
       </div>
     </div>
   </section>
 }
 
-function Broker({ position, name, logo, order, highlightProgress, orderProgress, messageProgress }: { position: string; name: string; logo: string; order: string; highlightProgress: MotionValue<number>; orderProgress: MotionValue<number>; messageProgress: MotionValue<number> }) {
-  const highlightRotation = useTransform(highlightProgress, [0, 1], [0, 360])
-  const highlightColor = useTransform(highlightProgress, [0, 1], ['#4d98ff', '#195e4b'])
-  const orderGlowProgress = useTransform(orderProgress, [0.96, 1], [0, 1])
-  const orderGlowShadow = useTransform(orderGlowProgress, [0, 1], ['0 0 0 rgba(56,217,161,0)', '0 0 22px 6px rgba(56,217,161,.95)'])
-  return <div className={`broker-stack ${position}`}><div className="broker-node logo-node"><motion.svg className="logo-halo" viewBox="0 0 100 100" aria-hidden="true" style={{ opacity: 1, x: '-50%', y: '-50%', rotate: highlightRotation }}><motion.circle cx="50" cy="50" r="46" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ pathLength: highlightProgress, stroke: highlightColor, color: highlightColor }} /></motion.svg><img className="broker-logo" src={logo} alt={`${name} logo`} /></div><motion.div className="order-popup" style={{ scale: orderProgress, opacity: orderProgress }}><motion.span className="order-check" style={{ boxShadow: orderGlowShadow }}><Check size={14} strokeWidth={2.5} /></motion.span><strong>{order}</strong></motion.div>{position === 'broker-center' && <motion.p className="flow-tagline" style={{ opacity: messageProgress }}>That’s how easy it is to manage<br /><em>all your portfolios, 24/7.</em></motion.p>}</div>
+function FlowNode({ broker, index, mobile, progress, taglineOpacity }: { broker: FlowBroker; index: number; mobile: boolean; progress: MotionValue<number>; taglineOpacity?: MotionValue<number> }) {
+  const chip = useTransform(progress, [.5 + index * .04, .58 + index * .04], [0, 1])
+  const glowP = useTransform(chip, [.96, 1], [0, 1])
+  const glowShadow = useTransform(glowP, [0, 1], ['0 0 0 rgba(56,217,161,0)', '0 0 22px 6px rgba(56,217,161,.95)'])
+  const side = index === 0 ? 'flow-node-left' : index === 2 ? 'flow-node-right' : ''
+  return <div className={`flow-node ${side}`} style={{ left: `${(mobile ? broker.mx : broker.x) * 100}%`, top: `calc(${mobile ? (index === 1 ? 74.5 : 65.5) : (index === 1 ? 84 : 68)}% + 46px)` }}>
+    <motion.div className="order-popup" style={{ scale: chip, opacity: chip }}><motion.span className="order-check" style={{ boxShadow: glowShadow }}><Check size={14} strokeWidth={2.5} /></motion.span><strong>{broker.order}</strong></motion.div>
+    {taglineOpacity && <motion.p className="flow-tagline" style={{ opacity: taglineOpacity }}>That’s how easy it is to manage<br /><em>all your portfolios, 24/7.</em></motion.p>}
+  </div>
 }
 
 /* ============================================================
@@ -164,25 +484,25 @@ const FIELD_EMBLEMS: FieldEmblem[] = [
     },
   },
   {
-    x: .88, y: .40, depth: .8, step: 4, bf: .55, bp: 1.2, w: 120, h: 140,
+    x: .81, y: .40, depth: .85, step: 2, bf: .55, bp: 1.2, w: 250, h: 60, crisp: true,
     draw: ctx => {
-      ctx.fillStyle = '#f1e9d2'
-      ctx.beginPath(); ctx.roundRect(16, 12, 88, 116, 7); ctx.fill()
-      ctx.fillStyle = '#c0524e'; ctx.fillRect(26, 24, 68, 10)
-      ctx.fillStyle = '#c9a06a'; ctx.fillRect(72, 46, 22, 22)
-      ctx.fillStyle = '#6d6350'
-      ctx.fillRect(26, 46, 38, 5); ctx.fillRect(26, 58, 38, 5); ctx.fillRect(26, 78, 68, 5)
-      ctx.fillRect(26, 90, 68, 5); ctx.fillRect(26, 102, 68, 5); ctx.fillRect(26, 114, 46, 5)
+      ctx.fillStyle = '#7de3b3'
+      ctx.font = '600 36px "DM Mono",monospace'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('SPY +.61%', 125, 30)
     },
   },
   {
-    x: .12, y: .52, depth: .85, step: 3, bf: .47, bp: 3.3, w: 150, h: 150,
+    x: .24, y: .52, depth: .85, step: 2, bf: .47, bp: 3.3, w: 220, h: 60, crisp: true,
     draw: ctx => {
-      ctx.strokeStyle = '#7ad687'
-      ctx.lineWidth = 10
-      ctx.beginPath(); ctx.ellipse(75, 75, 54, 30, -.16, 0, TAU); ctx.stroke()
-      ctx.lineWidth = 8
-      ctx.beginPath(); ctx.arc(75, 75, 13, 0, TAU); ctx.stroke()
+      ctx.font = '800 38px Manrope,system-ui,sans-serif'
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'
+      const w1 = ctx.measureText('Game').width
+      const start = (220 - w1 - ctx.measureText('Stop').width) / 2
+      ctx.fillStyle = '#f2f6fb'
+      ctx.fillText('Game', start, 32)
+      ctx.fillStyle = '#f04f45'
+      ctx.fillText('Stop', start + w1, 32)
     },
   },
   {
@@ -222,6 +542,7 @@ const FIELD_EMBLEMS: FieldEmblem[] = [
 ]
 
 const FIELD_GLOW = [[125, 183, 255], [223, 243, 255], [169, 146, 255], [255, 255, 255], [99, 195, 255]]
+const FIELD_BLEED = 70
 const GROUND_COLORS = [[64, 124, 214], [90, 160, 255], [122, 108, 255], [63, 191, 150]]
 
 type FieldParticle = {
@@ -281,9 +602,11 @@ const sampleHorse = () => {
   const ctx = cv.getContext('2d')
   const pts: { u: number; v: number }[] = []
   if (!ctx) return pts
-  const k = w / 390
+  // Padded box (22..448 on both axes) so stroke caps — the ear tip, the
+  // muzzle — sample fully instead of clipping at the canvas edge.
+  const k = w / 426
   ctx.scale(k, k)
-  ctx.translate(-40, -40)
+  ctx.translate(-22, -22)
   ctx.strokeStyle = ctx.fillStyle = '#fff'
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'
   ctx.lineWidth = 17
@@ -330,14 +653,16 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
     const resize = () => {
       const b = stage.getBoundingClientRect()
       W = b.width; H = b.height
-      canvas.width = W * dpr; canvas.height = H * dpr
-      canvas.style.width = `${W}px`; canvas.style.height = `${H}px`
+      // Bleed above the stage so bobbing emblems never clip at the top edge.
+      canvas.width = W * dpr; canvas.height = (H + FIELD_BLEED) * dpr
+      canvas.style.width = `${W}px`; canvas.style.height = `${H + FIELD_BLEED}px`
+      canvas.style.top = `-${FIELD_BLEED}px`
       scale = Math.max(.55, Math.min(1, Math.min(W / 880, H / 640)))
       const hw = Math.min(W, H) * .58
       // The glyph's visual mass sits right of the viewBox center (the box
       // reserves room for the muzzle), so shift the box left to center it.
-      const hoff = hw * .105
-      horse = { cx: W * .5 - hoff, cy: H * .45, w: hw, h: hw }
+      const hoff = hw * .096
+      horse = { cx: W * .5 - hoff, cy: H * .47, w: hw, h: hw }
       horseEl.style.width = `${hw}px`
       horseEl.style.height = `${horse.h}px`
       horseEl.style.marginLeft = `${-hw / 2 - hoff}px`
@@ -393,14 +718,14 @@ function SignalField({ progress }: { progress: MotionValue<number> }) {
         captionRef.current.style.opacity = String(c)
         captionRef.current.style.transform = `translateX(-50%) translateY(${(1 - c) * 14}px)`
       }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, W, H)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, FIELD_BLEED * dpr)
+      ctx.clearRect(0, -FIELD_BLEED, W, H + FIELD_BLEED)
       ctx.globalCompositeOperation = 'lighter'
       for (let e = 0; e < FIELD_EMBLEMS.length; e++) {
         const s = FIELD_EMBLEMS[e]
         // Desktop stages are shorter relative to glyph size, so compress the
         // field downward to keep the top row clear of the stage edge.
-        const ey = narrow.matches ? s.y : .07 + s.y * .88
+        const ey = narrow.matches ? s.y : .09 + s.y * .86
         ecx[e] = s.x * W + Math.sin(t * s.bf + s.bp) * 13 * s.depth * amp + parX * 16 * s.depth * amp
         ecy[e] = ey * H + Math.cos(t * s.bf * .8 + s.bp * 1.7) * 9 * s.depth * amp + parY * 12 * s.depth * amp
       }
@@ -586,6 +911,6 @@ export function App() {
       <Fade delay={.12} className="final-install"><InstallCard /></Fade>
     </section>
 
-    <footer id={BOTTOM_ANCHOR}><Brand /><p>{isMobile ? 'AI-native financial intelligence platform.' : 'AI-native trading intelligence, built with intention.'}</p><div>{!isMobile && <a href="https://github.com/toniree/stratfolio-app" target="_blank" rel="noreferrer">GitHub</a>}<span>© 2026 StratFolio</span></div><small>Everything in this demo is simulated. Not investment advice. No orders leave the browser.<span className="footer-trademark">All third-party trademarks (including Google) are property of their respective owners and used for demonstration purposes only.</span></small></footer>
+    <footer id={BOTTOM_ANCHOR}><Brand /><p>{isMobile ? 'AI-native financial intelligence platform.' : 'AI-native trading intelligence, built with intention.'}</p><div><span>© 2026 StratFolio</span></div><small>Everything in this demo is simulated. Not investment advice. No orders leave the browser.<span className="footer-trademark">All third-party trademarks (including Google) are property of their respective owners and used for demonstration purposes only.</span></small></footer>
   </main>
 }
