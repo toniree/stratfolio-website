@@ -26,11 +26,28 @@ function Brand() {
   return <a href={`#${TOP_ANCHOR}`} className="brand" aria-label="StratFolio home"><img src={asset('brand-mark.svg')} alt="" /><span>Strat<span>Folio</span></span></a>
 }
 
+const HORSE_BODY = 'm323 82 34 79c32 32 51 75 51 122v92H144v-39c0-43 17-83 48-113l31-30c-30 11-61 17-93 20l-31 3c-27 3-48-21-43-48 3-16 16-28 32-30l43-7c37-6 70-25 95-54l37-45c13-15 30-26 49-30z'
+const HORSE_ZIG = 'm178 350 66-70 41 35 79-67'
+const HORSE_ARROW = 'm390 226-17 45-30-35z'
+
 function HorseMark() {
   return <svg className="horse-mark" viewBox="40 40 390 350" aria-hidden="true">
-    <path pathLength="1" className="horse-trace horse-trace-soft" d="m323 82 34 79c32 32 51 75 51 122v92H144v-39c0-43 17-83 48-113l31-30c-30 11-61 17-93 20l-31 3c-27 3-48-21-43-48 3-16 16-28 32-30l43-7c37-6 70-25 95-54l37-45c13-15 30-26 49-30z" />
-    <path pathLength="1" className="horse-trace" d="m323 82 34 79c32 32 51 75 51 122v92H144v-39c0-43 17-83 48-113l31-30c-30 11-61 17-93 20l-31 3c-27 3-48-21-43-48 3-16 16-28 32-30l43-7c37-6 70-25 95-54l37-45c13-15 30-26 49-30z" />
-    <path pathLength="1" className="horse-detail" d="m178 350 66-70 41 35 79-67m26 1-28 73-48-57" />
+    <path pathLength="1" className="horse-trace horse-trace-soft" d={HORSE_BODY} />
+    <path pathLength="1" className="horse-trace" d={HORSE_BODY} />
+    <path pathLength="1" className="horse-detail" d={HORSE_ZIG} />
+    <path className="horse-arrow" d={HORSE_ARROW} />
+  </svg>
+}
+
+/* Full brand lockup for the signal-field finale: knight, chessboard
+   plinth, and the one-zig market arrow with its filled head. */
+function HorseLogoFull() {
+  return <svg className="horse-mark" viewBox="40 40 390 390" aria-hidden="true">
+    <path className="horse-trace horse-trace-soft" d={HORSE_BODY} />
+    <path className="horse-trace" d={HORSE_BODY} />
+    <rect className="horse-trace horse-base" x="121" y="375" width="310" height="55" rx="18" />
+    <path className="horse-detail" d={HORSE_ZIG} />
+    <path className="horse-arrow" d={HORSE_ARROW} />
   </svg>
 }
 
@@ -92,171 +109,382 @@ function Broker({ position, name, logo, order, highlightProgress, orderProgress,
   return <div className={`broker-stack ${position}`}><div className="broker-node logo-node"><motion.svg className="logo-halo" viewBox="0 0 100 100" aria-hidden="true" style={{ opacity: 1, x: '-50%', y: '-50%', rotate: highlightRotation }}><motion.circle cx="50" cy="50" r="46" fill="none" strokeWidth="2.5" strokeLinecap="round" style={{ pathLength: highlightProgress, stroke: highlightColor, color: highlightColor }} /></motion.svg><img className="broker-logo" src={logo} alt={`${name} logo`} /></div><motion.div className="order-popup" style={{ scale: orderProgress, opacity: orderProgress }}><motion.span className="order-check" style={{ boxShadow: orderGlowShadow }}><Check size={14} strokeWidth={2.5} /></motion.span><strong>{order}</strong></motion.div>{position === 'broker-center' && <motion.p className="flow-tagline" style={{ opacity: messageProgress }}>That’s how easy it is to manage<br /><em>all your portfolios, 24/7.</em></motion.p>}</div>
 }
 
-const GoogleG = () => <svg viewBox="0 0 48 48" aria-hidden="true">
-  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-</svg>
+/* ============================================================
+   Signal field: the markets-move scene. Company logos, news, and
+   headlines are rendered as clouds of dots that hover over rolling
+   particle hills; on scroll every dot is blown loose and pulled
+   into the StratFolio horse mark. */
 
-const AmazonA = () => <i className="glyph glyph-amazon-forge">a<svg viewBox="0 0 44 16" aria-hidden="true">
-  <path d="M3 3c10.5 9 27.5 9 37-1.5" fill="none" stroke="#ff9900" strokeWidth="3" strokeLinecap="round" />
-  <path d="M40.2 0l1.6 7.2-7-1.6z" fill="#ff9900" />
-</svg></i>
+const TAU = Math.PI * 2
+const smooth = (v: number) => { const c = Math.max(0, Math.min(1, v)); return c * c * (3 - 2 * c) }
 
-const AppleMark = () => <svg viewBox="0 0 814 1000" aria-hidden="true">
-  <path fill="#f2f6fb" d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.5 0 130.9 2.6 198.3 99.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z" />
-</svg>
+const APPLE_PATH = 'M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.5 0 130.9 2.6 198.3 99.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z'
 
-const FORGE_POPS = [
-  { cls: 'pop-tesla', label: 'Tesla logo', glyph: <i className="glyph glyph-tesla">T</i> },
-  { cls: 'pop-google', label: 'Google logo', glyph: <i className="glyph glyph-google-classic"><GoogleG /></i> },
-  { cls: 'pop-nvidia', label: 'Nvidia logo', glyph: <i className="glyph glyph-nvidia" /> },
-  { cls: 'pop-apple', label: 'Apple logo', glyph: <i className="glyph glyph-apple"><AppleMark /></i> },
-  { cls: 'pop-amazon', label: 'Amazon logo', glyph: <AmazonA /> },
-  { cls: 'pop-news', label: 'News headline', glyph: <i className="glyph glyph-news" /> },
+const GOOGLE_PATHS: Array<[string, string]> = [
+  ['#EA4335', 'M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'],
+  ['#4285F4', 'M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'],
+  ['#FBBC05', 'M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'],
+  ['#34A853', 'M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'],
 ]
 
-const SPARK_COLORS = ['#dff7ff', '#63c3ff', '#a98dff', '#45d7ab', '#ffffff', '#8ecbff']
+type FieldEmblem = { x: number; y: number; depth: number; step: number; bf: number; bp: number; w: number; h: number; crisp?: boolean; draw: (ctx: CanvasRenderingContext2D) => void }
 
-type Spark = {
-  x: number; y: number; vx: number; vy: number
-  tx: number; ty: number
-  born: number; ttl: number; size: number
-  color: string; twinklePhase: number; twinkleFreq: number
-  drift: number
+const FIELD_EMBLEMS: FieldEmblem[] = [
+  {
+    x: .15, y: .20, depth: 1.1, step: 3, bf: .42, bp: 0.7, w: 150, h: 150,
+    draw: ctx => {
+      const k = 112 / 1000
+      ctx.translate((150 - 814 * k) / 2, 19)
+      ctx.scale(k, k)
+      ctx.fillStyle = '#e8eef7'
+      ctx.fill(new Path2D(APPLE_PATH))
+    },
+  },
+  {
+    x: .42, y: .11, depth: .9, step: 3, bf: .5, bp: 2.1, w: 150, h: 150,
+    draw: ctx => {
+      const k = 112 / 48
+      ctx.translate(19, 19)
+      ctx.scale(k, k)
+      for (const [color, d] of GOOGLE_PATHS) { ctx.fillStyle = color; ctx.fill(new Path2D(d)) }
+    },
+  },
+  {
+    x: .73, y: .16, depth: 1.05, step: 3, bf: .38, bp: 4.4, w: 150, h: 150,
+    draw: ctx => {
+      ctx.strokeStyle = ctx.fillStyle = '#f4f7fd'
+      ctx.lineCap = 'round'
+      ctx.lineWidth = 12
+      ctx.beginPath()
+      ctx.arc(75, 134, 86, -Math.PI * .7, -Math.PI * .3)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(67, 55); ctx.lineTo(83, 55); ctx.lineTo(78, 132); ctx.lineTo(72, 132)
+      ctx.closePath(); ctx.fill()
+    },
+  },
+  {
+    x: .88, y: .40, depth: .8, step: 4, bf: .55, bp: 1.2, w: 120, h: 140,
+    draw: ctx => {
+      ctx.fillStyle = '#f1e9d2'
+      ctx.beginPath(); ctx.roundRect(16, 12, 88, 116, 7); ctx.fill()
+      ctx.fillStyle = '#c0524e'; ctx.fillRect(26, 24, 68, 10)
+      ctx.fillStyle = '#c9a06a'; ctx.fillRect(72, 46, 22, 22)
+      ctx.fillStyle = '#6d6350'
+      ctx.fillRect(26, 46, 38, 5); ctx.fillRect(26, 58, 38, 5); ctx.fillRect(26, 78, 68, 5)
+      ctx.fillRect(26, 90, 68, 5); ctx.fillRect(26, 102, 68, 5); ctx.fillRect(26, 114, 46, 5)
+    },
+  },
+  {
+    x: .12, y: .52, depth: .85, step: 3, bf: .47, bp: 3.3, w: 150, h: 150,
+    draw: ctx => {
+      ctx.strokeStyle = '#7ad687'
+      ctx.lineWidth = 10
+      ctx.beginPath(); ctx.ellipse(75, 75, 54, 30, -.16, 0, TAU); ctx.stroke()
+      ctx.lineWidth = 8
+      ctx.beginPath(); ctx.arc(75, 75, 13, 0, TAU); ctx.stroke()
+    },
+  },
+  {
+    x: .68, y: .60, depth: 1, step: 3, bf: .36, bp: 5.5, w: 150, h: 150,
+    draw: ctx => {
+      ctx.fillStyle = '#f2f6fb'
+      ctx.font = '800 116px Manrope,system-ui,sans-serif'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('a', 75, 66)
+      ctx.strokeStyle = '#ff9900'
+      ctx.lineWidth = 10; ctx.lineCap = 'round'
+      ctx.beginPath(); ctx.arc(75, 58, 62, Math.PI * .3, Math.PI * .7); ctx.stroke()
+      const ang = Math.PI * .3
+      const ax = 75 + Math.cos(ang) * 62, ay = 58 + Math.sin(ang) * 62
+      ctx.fillStyle = '#ff9900'
+      ctx.beginPath(); ctx.moveTo(ax + 10, ay - 15); ctx.lineTo(ax + 13, ay + 8); ctx.lineTo(ax - 11, ay + 2); ctx.closePath(); ctx.fill()
+    },
+  },
+  {
+    x: .38, y: .74, depth: 1, step: 2, bf: .6, bp: 2.8, w: 360, h: 60, crisp: true,
+    draw: ctx => {
+      ctx.fillStyle = '#9fc4ff'
+      ctx.font = '600 36px "DM Mono",monospace'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('FED HOLDS RATES', 180, 30)
+    },
+  },
+  {
+    x: .76, y: .78, depth: .95, step: 2, bf: .52, bp: .4, w: 240, h: 60, crisp: true,
+    draw: ctx => {
+      ctx.fillStyle = '#7de3b3'
+      ctx.font = '600 36px "DM Mono",monospace'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText('NVDA +3.2%', 120, 30)
+    },
+  },
+]
+
+const FIELD_GLOW = [[125, 183, 255], [223, 243, 255], [169, 146, 255], [255, 255, 255], [99, 195, 255]]
+const GROUND_COLORS = [[64, 124, 214], [90, 160, 255], [122, 108, 255], [63, 191, 150]]
+
+type FieldParticle = {
+  e: number; lx: number; ly: number
+  u: number; v: number
+  r: number; g: number; b: number
+  gr: number; gg: number; gb: number
+  size: number; delay: number
+  sx: number; sy: number
+  phase: number
 }
 
-function MatrixForge() {
-  const visualRef = useRef<HTMLDivElement>(null)
+type GroundDot = {
+  u: number; t: number; row: number
+  size: number; alpha: number
+  r: number; g: number; b: number
+  phase: number; liftX: number; liftY: number; delay: number
+}
+
+const sampleEmblems = () => {
+  const parts: FieldParticle[] = []
+  FIELD_EMBLEMS.forEach((spec, e) => {
+    const cv = document.createElement('canvas')
+    cv.width = spec.w; cv.height = spec.h
+    const g2 = cv.getContext('2d')
+    if (!g2) return
+    spec.draw(g2)
+    const data = g2.getImageData(0, 0, spec.w, spec.h).data
+    for (let y = 0; y < spec.h; y += spec.step) {
+      for (let x = 0; x < spec.w; x += spec.step) {
+        const i = (y * spec.w + x) * 4
+        if (data[i + 3] < 110) continue
+        const glow = FIELD_GLOW[(Math.random() * FIELD_GLOW.length) | 0]
+        const a = Math.random() * TAU
+        const mag = 50 + Math.random() * 130
+        const jit = spec.crisp ? .3 : 1
+        parts.push({
+          e, lx: x - spec.w / 2 + (Math.random() - .5) * jit, ly: y - spec.h / 2 + (Math.random() - .5) * jit,
+          u: 0, v: 0,
+          r: data[i], g: data[i + 1], b: data[i + 2],
+          gr: glow[0], gg: glow[1], gb: glow[2],
+          size: spec.crisp ? 1 + Math.random() * .5 : 1.5 + Math.random() * 1.3,
+          delay: .24 + e * .04 + Math.random() * .07,
+          sx: Math.cos(a) * mag, sy: Math.sin(a) * mag - 70,
+          phase: Math.random() * TAU,
+        })
+      }
+    }
+  })
+  return parts
+}
+
+const sampleHorse = () => {
+  const w = 280, h = 280
+  const cv = document.createElement('canvas')
+  cv.width = w; cv.height = h
+  const ctx = cv.getContext('2d')
+  const pts: { u: number; v: number }[] = []
+  if (!ctx) return pts
+  const k = w / 390
+  ctx.scale(k, k)
+  ctx.translate(-40, -40)
+  ctx.strokeStyle = ctx.fillStyle = '#fff'
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'
+  ctx.lineWidth = 17
+  ctx.stroke(new Path2D(HORSE_BODY))
+  ctx.beginPath()
+  ctx.roundRect(121, 375, 310, 55, 18)
+  ctx.stroke()
+  ctx.lineWidth = 22
+  ctx.stroke(new Path2D(HORSE_ZIG))
+  ctx.fill(new Path2D(HORSE_ARROW))
+  const data = ctx.getImageData(0, 0, w, h).data
+  for (let y = 0; y < h; y += 3) for (let x = 0; x < w; x += 3) {
+    if (data[(y * w + x) * 4 + 3] > 110) pts.push({ u: x / w, v: y / h })
+  }
+  return pts
+}
+
+function SignalField({ progress }: { progress: MotionValue<number> }) {
+  const stageRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const horseRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLSpanElement>(null)
-  const popRefs = useRef<(HTMLSpanElement | null)[]>([])
-  const sparksRef = useRef<Spark[]>([])
-  const chargeRef = useRef(0)
-  const [active, setActive] = useState(0)
-  const cells = Array.from({ length: 64 })
+  const readoutRef = useRef<HTMLDivElement>(null)
+  const captionRef = useRef<HTMLParagraphElement>(null)
 
-  // one logo at a time: form out of the tiles → float up → burst into sparks
   useEffect(() => {
-    let i = 0
-    let burstTimer: ReturnType<typeof setTimeout>
-    const cycle = setInterval(() => {
-      i = (i + 1) % FORGE_POPS.length
-      setActive(i)
-      burstTimer = setTimeout(() => spawnBurst(i), 1000)
-    }, 1250)
-    burstTimer = setTimeout(() => spawnBurst(0), 1000)
-    return () => { clearInterval(cycle); clearTimeout(burstTimer) }
+    const stage = stageRef.current, canvas = canvasRef.current, horseEl = horseRef.current
+    if (!stage || !canvas || !horseEl) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const narrow = window.matchMedia('(max-width:800px)')
+    const amp = reduced ? 0 : 1
+    let parts: FieldParticle[] = []
+    let ground: GroundDot[] = []
+    let W = 0, H = 0, scale = 1
+    let horse = { cx: 0, cy: 0, w: 0, h: 0 }
+    let raf = 0
+    let alive = true
+    let pointerX = 0, pointerY = 0, parX = 0, parY = 0
+    const ecx: number[] = [], ecy: number[] = []
+
+    const resize = () => {
+      const b = stage.getBoundingClientRect()
+      W = b.width; H = b.height
+      canvas.width = W * dpr; canvas.height = H * dpr
+      canvas.style.width = `${W}px`; canvas.style.height = `${H}px`
+      scale = Math.max(.55, Math.min(1, Math.min(W / 880, H / 640)))
+      const hw = Math.min(W, H) * .58
+      // The glyph's visual mass sits right of the viewBox center (the box
+      // reserves room for the muzzle), so shift the box left to center it.
+      const hoff = hw * .105
+      horse = { cx: W * .5 - hoff, cy: H * .45, w: hw, h: hw }
+      horseEl.style.width = `${hw}px`
+      horseEl.style.height = `${horse.h}px`
+      horseEl.style.marginLeft = `${-hw / 2 - hoff}px`
+      horseEl.style.marginTop = `${-horse.h / 2}px`
+    }
+
+    const build = () => {
+      if (!alive) return
+      parts = sampleEmblems()
+      const targets = sampleHorse()
+      for (let i = targets.length - 1; i > 0; i--) {
+        const j = (Math.random() * (i + 1)) | 0
+        const t = targets[i]; targets[i] = targets[j]; targets[j] = t
+      }
+      if (targets.length) parts.forEach((p, i) => { const t = targets[i % targets.length]; p.u = t.u; p.v = t.v })
+      ground = []
+      for (let row = 0; row < 8; row++) {
+        const t = row / 7
+        const n = 24 + row * 6
+        for (let i = 0; i < n; i++) {
+          const c = GROUND_COLORS[(Math.random() * GROUND_COLORS.length) | 0]
+          ground.push({
+            u: (i + Math.random() * .8) / n, t, row,
+            size: .9 + t * 1.7, alpha: .14 + t * .3,
+            r: c[0], g: c[1], b: c[2],
+            phase: Math.random() * TAU,
+            liftX: (Math.random() - .5) * 160, liftY: 60 + Math.random() * 140,
+            delay: .3 + Math.random() * .2,
+          })
+        }
+      }
+    }
+
+    const onPointer = (ev: PointerEvent) => {
+      const b = stage.getBoundingClientRect()
+      pointerX = ((ev.clientX - b.left) / Math.max(b.width, 1) - .5) * 2
+      pointerY = ((ev.clientY - b.top) / Math.max(b.height, 1) - .5) * 2
+    }
+
+    const tick = (now: number) => {
+      if (!alive) return
+      raf = requestAnimationFrame(tick)
+      const t = now / 1000
+      const p = progress.get()
+      parX += (pointerX - parX) * .04
+      parY += (pointerY - parY) * .04
+      horseEl.style.opacity = String(smooth((p - .8) / .12))
+      horseEl.style.transform = `scale(${.9 + .1 * smooth((p - .8) / .15)})`
+      if (glowRef.current) glowRef.current.style.opacity = String(.9 * smooth((p - .55) / .37))
+      if (readoutRef.current) readoutRef.current.style.opacity = String(1 - smooth((p - .35) / .15))
+      if (captionRef.current) {
+        const c = smooth((p - .9) / .085)
+        captionRef.current.style.opacity = String(c)
+        captionRef.current.style.transform = `translateX(-50%) translateY(${(1 - c) * 14}px)`
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, W, H)
+      ctx.globalCompositeOperation = 'lighter'
+      for (let e = 0; e < FIELD_EMBLEMS.length; e++) {
+        const s = FIELD_EMBLEMS[e]
+        // Desktop stages are shorter relative to glyph size, so compress the
+        // field downward to keep the top row clear of the stage edge.
+        const ey = narrow.matches ? s.y : .07 + s.y * .88
+        ecx[e] = s.x * W + Math.sin(t * s.bf + s.bp) * 13 * s.depth * amp + parX * 16 * s.depth * amp
+        ecy[e] = ey * H + Math.cos(t * s.bf * .8 + s.bp * 1.7) * 9 * s.depth * amp + parY * 12 * s.depth * amp
+      }
+      const roll = amp ? t : 0
+      for (const d of ground) {
+        const q = smooth((p - d.delay) / .38)
+        if (q >= 1) continue
+        const dir = d.row % 2 ? 1 : -1
+        const u = (d.u + roll * .006 * dir * (.4 + d.t) + 8) % 1
+        const x = u * W + d.liftX * q
+        const y = (0.68 + 0.29 * Math.pow(d.t, 1.4)) * H
+          + Math.sin(u * TAU * 1.35 + d.row * .8 + roll * .35) * (5 + 11 * d.t)
+          - d.liftY * q
+        ctx.globalAlpha = d.alpha * (1 - q) * (.75 + .25 * Math.sin(t * 1.3 + d.phase))
+        ctx.fillStyle = `rgb(${d.r},${d.g},${d.b})`
+        const gs = d.size * (1 - q * .5)
+        ctx.fillRect(x - gs / 2, y - gs / 2, gs, gs)
+      }
+      const endFade = 1 - .8 * smooth((p - .86) / .1)
+      for (const pt of parts) {
+        const spec = FIELD_EMBLEMS[pt.e]
+        const ds = spec.depth
+        // Text emblems keep a minimum scale so they stay legible on phones.
+        const bs = spec.crisp ? Math.max(scale, .78) : scale
+        const hx = ecx[pt.e] + pt.lx * bs * ds
+        const hy = ecy[pt.e] + pt.ly * bs * ds
+        const q = smooth((p - pt.delay) / .3)
+        let x: number, y: number, r: number, g: number, b: number, al: number, size: number
+        if (q <= 0) {
+          const wob = (spec.crisp ? .35 : 1.6) * amp
+          x = hx + Math.sin(t * 1.7 + pt.phase) * wob
+          y = hy + Math.cos(t * 1.4 + pt.phase) * wob
+          r = pt.r; g = pt.g; b = pt.b
+          al = .82 + .18 * Math.sin(t * 2.2 + pt.phase)
+          size = pt.size * bs * (.6 + .4 * ds)
+        } else {
+          const tx = horse.cx - horse.w / 2 + pt.u * horse.w
+          const ty = horse.cy - horse.h / 2 + pt.v * horse.h
+          const mx = (hx + tx) / 2 + pt.sx * scale
+          const my = (hy + ty) / 2 + pt.sy * scale
+          const i1x = hx + (mx - hx) * q, i1y = hy + (my - hy) * q
+          const i2x = mx + (tx - mx) * q, i2y = my + (ty - my) * q
+          r = pt.r + (pt.gr - pt.r) * q
+          g = pt.g + (pt.gg - pt.g) * q
+          b = pt.b + (pt.gb - pt.b) * q
+          size = pt.size * bs * (.6 + .4 * ds) * (1 - .25 * q)
+          if (q >= 1) {
+            x = tx + Math.sin(t * 2.1 + pt.phase) * 1.2 * amp
+            y = ty + Math.cos(t * 1.9 + pt.phase) * 1.2 * amp
+            al = .55 + .45 * Math.sin(t * 5 + pt.phase)
+          } else {
+            x = i1x + (i2x - i1x) * q
+            y = i1y + (i2y - i1y) * q
+            al = 1
+          }
+        }
+        ctx.globalAlpha = Math.max(0, Math.min(1, al * endFade))
+        ctx.fillStyle = `rgb(${r | 0},${g | 0},${b | 0})`
+        ctx.fillRect(x - size / 2, y - size / 2, size, size)
+      }
+    }
+
+    resize()
+    const ro = new ResizeObserver(resize)
+    ro.observe(stage)
+    if (document.fonts?.ready) document.fonts.ready.then(() => { if (alive) build() })
+    else build()
+    window.addEventListener('pointermove', onPointer)
+    raf = requestAnimationFrame(tick)
+    return () => {
+      alive = false
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      window.removeEventListener('pointermove', onPointer)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const spawnBurst = (index: number) => {
-    const visual = visualRef.current, pop = popRefs.current[index], horse = horseRef.current
-    if (!visual || !pop || !horse) return
-    const vb = visual.getBoundingClientRect()
-    const pb = pop.getBoundingClientRect()
-    const hb = horse.getBoundingClientRect()
-    const now = performance.now()
-    const cx = pb.left - vb.left + pb.width / 2
-    const cy = pb.top - vb.top + pb.height / 2
-    const tx = hb.left - vb.left + hb.width / 2
-    const ty = hb.top - vb.top + hb.height / 2
-    const sparks = sparksRef.current
-    for (let s = 0; s < 48; s++) {
-      const a = Math.random() * Math.PI * 2
-      const r = Math.random() * pb.width * 0.45
-      sparks.push({
-        x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.8,
-        vx: (Math.random() - 0.5) * 46, vy: -18 - Math.random() * 60,
-        tx: tx + (Math.random() - 0.5) * 14, ty: ty + (Math.random() - 0.5) * 10,
-        born: now + Math.random() * 160, ttl: 1200 + Math.random() * 500,
-        size: 0.6 + Math.random() * 1.7,
-        color: SPARK_COLORS[(Math.random() * SPARK_COLORS.length) | 0],
-        twinklePhase: Math.random() * Math.PI * 2, twinkleFreq: 6 + Math.random() * 9,
-        drift: (Math.random() - 0.5) * 40,
-      })
-    }
-  }
-
-  useEffect(() => {
-    const canvas = canvasRef.current, visual = visualRef.current
-    if (!canvas || !visual) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    let raf = 0
-    let last = performance.now()
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const resize = () => {
-      const b = visual.getBoundingClientRect()
-      canvas.width = b.width * dpr
-      canvas.height = b.height * dpr
-      canvas.style.width = `${b.width}px`
-      canvas.style.height = `${b.height}px`
-    }
-    resize()
-    const ro = new ResizeObserver(resize)
-    ro.observe(visual)
-    const tick = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 0.05)
-      last = now
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.globalCompositeOperation = 'lighter'
-      const sparks = sparksRef.current
-      let arrived = 0
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const p = sparks[i]
-        if (now < p.born) continue
-        const age = now - p.born
-        const life = age / p.ttl
-        if (life >= 1) { sparks.splice(i, 1); arrived++; continue }
-        // scatter first, then get pulled up into the horse
-        const pull = life < 0.22 ? 0 : Math.min((life - 0.22) / 0.5, 1)
-        const ease = pull * pull * (3 - 2 * pull)
-        p.x += (p.vx + Math.sin(now / 240 + p.twinklePhase) * p.drift * (1 - ease)) * dt * (1 - ease) + (p.tx - p.x) * ease * dt * 4.2
-        p.y += p.vy * dt * (1 - ease) + (p.ty - p.y) * ease * dt * 4.2
-        const dx = p.tx - p.x, dy = p.ty - p.y
-        if (ease > 0.6 && dx * dx + dy * dy < 64) { sparks.splice(i, 1); arrived++; continue }
-        const twinkle = 0.45 + 0.55 * Math.abs(Math.sin(now / 1000 * p.twinkleFreq + p.twinklePhase))
-        const fade = life < 0.12 ? life / 0.12 : life > 0.86 ? (1 - life) / 0.14 : 1
-        ctx.globalAlpha = twinkle * fade
-        ctx.fillStyle = p.color
-        ctx.shadowColor = p.color
-        ctx.shadowBlur = 6
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fill()
-      }
-      if (arrived > 0) chargeRef.current = Math.min(chargeRef.current + arrived * 0.06, 1)
-      chargeRef.current = Math.max(chargeRef.current - dt * 0.55, 0)
-      if (glowRef.current) glowRef.current.style.opacity = String(0.3 + chargeRef.current * 0.7)
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(raf); ro.disconnect() }
-  }, [])
-
-  return <div className="matrix-visual matrix-forge" aria-hidden="true" ref={visualRef}>
-    <div className="matrix-beam beam-one" /><div className="matrix-beam beam-two" />
-    <div className="matrix-cells">{cells.map((_, i) => <i key={i} style={{ animationDelay: `${(i % 8) * 0.11 + Math.floor(i / 8) * .04}s` }} />)}</div>
-    <div className="forge-horse" ref={horseRef}><HorseMark /><span className="forge-horse-glow" ref={glowRef} /></div>
-    <div className="matrix-pops forge-pops">
-      {FORGE_POPS.map((p, i) => <motion.span
-        key={p.cls}
-        ref={el => { popRefs.current[i] = el }}
-        className={`matrix-pop forge-pop ${p.cls}`}
-        aria-label={p.label}
-        initial={{ opacity: 0, y: 26, scale: 0.4, filter: 'blur(3px)' }}
-        animate={active === i
-          ? { opacity: [0, 1, 1, 1, 0], y: [26, 0, -6, -44, -50], scale: [0.4, 1, 1.03, 1.05, 0.5], filter: ['blur(3px)', 'blur(0px)', 'blur(0px)', 'blur(0px)', 'blur(3px)'] }
-          : { opacity: 0, y: 26, scale: 0.4, filter: 'blur(3px)', transition: { duration: 0.01 } }}
-        transition={active === i ? { duration: 1.15, times: [0, 0.26, 0.45, 0.85, 1], ease: 'easeInOut' } : undefined}
-      >{p.glyph}</motion.span>)}
-    </div>
-    <canvas className="forge-canvas" ref={canvasRef} />
-    <MachineStream />
+  return <div className="field-stage" ref={stageRef} aria-hidden="true">
+    <canvas className="field-canvas" ref={canvasRef} />
+    <span className="field-glow" ref={glowRef} style={{ opacity: 0 }} />
+    <div className="field-horse" ref={horseRef} style={{ opacity: 0 }}><HorseLogoFull /></div>
+    <div className="field-readout" ref={readoutRef}><MachineStream /></div>
+    <p className="field-caption" ref={captionRef} style={{ opacity: 0 }}>EVERY SIGNAL — AI GENERATED THESES</p>
   </div>
 }
 
@@ -289,9 +517,15 @@ function MachineStream() {
   </div>
 }
 
-function DataMatrix({ mobile = false }: { mobile?: boolean }) {
-  const cells = Array.from({ length: 64 })
-  return <section className="data-matrix"><div className="matrix-copy"><span className="section-num">{mobile ? '02 — PERPETUAL MOTION' : '05 — ALWAYS IN MOTION'}</span><h2>Markets move.<br /><em>Your plan moves with them.</em></h2><p>Price, news, catalysts, and risk signals flow through one living system—a system that evolves alongside your portfolio.</p></div>{mobile ? <MatrixForge /> : <div className="matrix-visual" aria-hidden="true"><div className="matrix-beam beam-one" /><div className="matrix-beam beam-two" /><div className="matrix-cells">{cells.map((_, i) => <i key={i} style={{ animationDelay: `${(i % 8) * 0.11 + Math.floor(i / 8) * .04}s` }} />)}</div><div className="matrix-pops"><span className="matrix-pop pop-tesla" aria-label="Tesla logo"><i className="glyph glyph-tesla">T</i></span><span className="matrix-pop pop-nvidia" aria-label="Nvidia logo"><i className="glyph glyph-nvidia" /></span><span className="matrix-pop pop-amazon" aria-label="Amazon logo"><i className="glyph glyph-amazon">a</i></span><span className="matrix-pop pop-google" aria-label="Google logo"><i className="glyph glyph-google">G</i></span><span className="matrix-pop pop-news" aria-label="News headline"><i className="glyph glyph-news" /></span><span className="matrix-pop pop-trump" aria-label="Donald Trump market commentary"><i className="glyph glyph-avatar">DT</i></span><span className="matrix-pop pop-cramer" aria-label="Jim Cramer market commentary"><i className="glyph glyph-avatar">JC</i></span></div><div className="matrix-readout"><span>MARKET DATA STREAM</span><strong>LIVE <i>●</i></strong><small>SPY&nbsp;&nbsp; 5,325.81&nbsp;&nbsp; +0.62%</small><small>PLTR&nbsp; 75.68&nbsp;&nbsp;&nbsp; +1.04%</small><small>WMT&nbsp;&nbsp; 102.06&nbsp; −0.08%</small></div></div>}</section>
+function DataMatrix() {
+  const ref = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+  return <section className="data-matrix field-section" ref={ref}>
+    <div className="field-sticky">
+      <div className="matrix-copy"><span className="section-num">02 — PERPETUAL MOTION</span><h2>Markets move.<br /><em>Your plans move with them.</em></h2><p>Price, news, catalysts, and risk signals flow through one living system—a system that evolves alongside your portfolio.</p></div>
+      <SignalField progress={scrollYProgress} />
+    </div>
+  </section>
 }
 
 export function App() {
@@ -332,7 +566,8 @@ export function App() {
 
     <TradeFlow mobile={isMobile} />
 
-    {isMobile && <DataMatrix mobile />}
+    {isMobile && <DataMatrix />}
+    {!isMobile && <DataMatrix />}
 
     <div className="feature-section-label"><Fade><span className="section-num">03 — NEW ERA OF TRADING</span></Fade></div>
 
@@ -344,13 +579,6 @@ export function App() {
       <Fade className="feature-card stat-card" delay={.08}><span className="icon"><ChartNoAxesCombined /></span><p className="label">ONE CLEAR VIEW</p><h3>Every account.<br />One intelligent book.</h3><div className="broker-cloud"><span>Robinhood</span><span>Schwab</span><span>Fidelity</span><span>E*TRADE</span><span>Webull</span><span>IBKR</span></div></Fade>
       <Fade className="feature-card metric-card" delay={.14}><span className="metric">24/7</span><h3>Your thesis never clocks out.</h3><p>Continuous monitoring across price, news, catalysts, and every rule you approve.</p><div className="wave"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></Fade>
     </section>
-
-    {!isMobile && <DataMatrix />}
-
-    {!isMobile && <section className="film" id="film">
-      <div className="film-heading"><Fade><span className="section-num">06 — SEE IT FOR REAL</span><h2>Built to feel alive.<br /><em>Because markets are.</em></h2></Fade><Fade delay={.1}><p>From the first position to the final plan, here is StratFolio working in the browser and in your hand.</p></Fade></div>
-      <Fade className="film-frame"><video src={asset('walkthrough.mp4')} autoPlay muted loop playsInline poster={asset('social-preview.png')} /><div className="film-label"><span className="pulse" /> LIVE PRODUCT WALKTHROUGH</div></Fade>
-    </section>}
 
     <section className="final-cta">
       <div className="final-glow" />
