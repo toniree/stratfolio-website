@@ -1,6 +1,6 @@
 # StratFolio AI Desktop and Mobile Website
 
-The public-facing website for **StratFolio AI**, designed as a responsive experience across desktop and mobile devices.
+The public-facing website for **StratFolio AI**, designed as a preview of StratFolio AI across desktop and mobile devices.
 
 ## Tech Stack
 
