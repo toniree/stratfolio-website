@@ -21,7 +21,7 @@ The project was developed through an AI-native software development workflow usi
 Development was driven through natural-language requirements, iterative prompting, visual review, debugging, and AI-assisted refinement rather than traditional manual implementation.
 
 The project serves as an experiment in **AI-native software engineering**, demonstrating how modern coding agents can take a product from concept to a polished, production-style frontend in a matter of days while shifting the developer's role from writing individual lines of code toward **architecture, product direction, review, testing, and orchestration of AI engineering agents**.
-Definitely a huge improvement in quality from my non-AI assisted website designs back in 2016-2017: [Crayons4Kids](https://toniree.github.io/crayons4kids)/
+Definitely a huge improvement in quality from my non-AI assisted website designs back in 2016-2017: [Crayons4Kids](https://toniree.github.io/crayons4kids)
 
 ## Acknowledgements
 
