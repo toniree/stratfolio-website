@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, type MotionValue } from 'framer-motion'
-import { ArrowRight, BrainCircuit, ChartNoAxesCombined, Check, Sparkles, UserRound } from 'lucide-react'
+import { ArrowRight, BrainCircuit, ChartNoAxesCombined, Check, Sparkles, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 function useIsMobile() {
@@ -57,12 +57,8 @@ function InstallCard({ floating = false, nav = false }: { floating?: boolean; na
   }
   return <motion.a href={nav ? undefined : installUrl} target={nav ? undefined : '_blank'} rel={nav ? undefined : 'noreferrer'} className={`install-card ${floating ? 'install-float' : ''} ${nav ? 'nav-install' : ''}`} onPointerDown={nav ? undefined : hapticPress} onClick={nav ? undefined : hapticPress} aria-label="Install StratFolio demo on iOS or Android" initial={floating ? { opacity: 0, x: 30 } : undefined} animate={floating ? { opacity: 1, x: 0 } : undefined} transition={{ delay: 1.1 }}>
     <img src={asset('install-qr.png')} alt="QR code to install StratFolio" />
-    <div><strong>{nav ? <>Install demo<br />on iOS/Android</> : <>Try StratFolio<br />on your mobile today</>}</strong><small><span className="desktop-install">Scan to install</span><span className="mobile-install">Press to install</span> <ArrowRight size={13} /></small></div>
+    <div><strong>{nav ? <>Install demo<br />on iOS/Android</> : <>Try StratFolio<br />today</>}</strong><small><span className="desktop-install">Scan to install</span><span className="mobile-install">Press to install</span> <ArrowRight size={13} /></small></div>
   </motion.a>
-}
-
-function AppShot({ src, alt, className = '' }: { src: string; alt: string; className?: string }) {
-  return <div className={`phone ${className}`}><div className="phone-speaker" /><img src={src} alt={alt} /></div>
 }
 
 /* ============================================================
@@ -405,8 +401,8 @@ function TradeFlow({ mobile = false }: { mobile?: boolean }) {
   return <section className="trade-flow" ref={ref}>
     <div className="flow-sticky">
       <div className="flow-heading"><span className="section-num">01 — ONE TRADE, EVERYWHERE</span><h2><span className="flow-title-line">Say the rule. </span><em>StratFolio watches it.</em></h2>{mobile
-        ? <p><span className="flow-lead">Write the way you think.</span><span>StratFolio turns plain English into an executable trade plan across all your brokerages.</span></p>
-        : <p><span className="flow-lead">Write the way you think.</span><span>StratFolio turns plain English into a monitored executable trade plan.<br />Approve the plan, and watch it execute across any of your brokerages once criteria are met.</span></p>}</div>
+        ? <p><span className="flow-lead">Write the way you <em className="think-target">think</em>.</span><span>StratFolio turns plain English into an executable trade plan across all your brokerages.</span></p>
+        : <p><span className="flow-lead">Write the way you <em className="think-target">think</em>.</span><span>StratFolio turns plain English into a monitored executable trade plan.<br />Approve the plan, and watch it execute across any of your brokerages once criteria are met.</span></p>}</div>
       <div className="flow-stage" ref={stageRef}>
         <div className="flow-grid" />
         <canvas className="flow-canvas" ref={canvasRef} aria-hidden="true" />
@@ -853,6 +849,463 @@ function DataMatrix() {
   </section>
 }
 
+/* ============================================================
+   Scroll stream: "SCROLL FOR MORE" hovers at the base of the
+   hero, written in glow atoms. Scrolling detonates it — the
+   atoms streak down the page, relight the word "think" in the
+   flow heading, then pour into the USER TRADE RULE ticket. All
+   anchors are live-measured, so the stream tracks layout. */
+
+const STREAM_TEXT = 'SCROLL FOR MORE'
+const STREAM_L1 = .26
+const STREAM_HOLD = .06
+const STREAM_L2 = .24
+
+type StreamDot = {
+  lx: number; ly: number            // offset from the beacon center
+  c: number[]; size: number; phase: number
+  d: number                         // departure delay, in scroll-progress space
+  sx: number; sy: number            // leg-1 scatter control (the bright detonation)
+  wx: number; wy: number            // landing spot inside "think" (normalized)
+  kx: number; ky: number            // leg-2 control offset
+  tx: number; ty: number            // landing spot inside the ticket (normalized)
+}
+
+function ScrollStream() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [reduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+  useEffect(() => {
+    if (reduced) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    let W = 0, H = 0
+    let dots: StreamDot[] = []
+    let raf = 0
+    let alive = true
+    let beacon: Element | null = null
+    let flow: Element | null = null
+    let think: HTMLElement | null = null
+    let ticket: HTMLElement | null = null
+
+    const resize = () => {
+      W = window.innerWidth; H = window.innerHeight
+      canvas.width = W * dpr; canvas.height = H * dpr
+    }
+
+    const build = () => {
+      if (!alive) return
+      const scale = 3
+      const cv = document.createElement('canvas')
+      const g = cv.getContext('2d')
+      if (!g) return
+      const style = (s: CanvasRenderingContext2D) => {
+        s.font = `600 ${14 * scale}px "DM Mono",monospace`
+        ;(s as unknown as { letterSpacing?: string }).letterSpacing = `${4 * scale}px`
+        s.textAlign = 'center'; s.textBaseline = 'middle'
+      }
+      style(g)
+      const w = Math.ceil(g.measureText(STREAM_TEXT).width) + 12
+      const h = 24 * scale
+      cv.width = w; cv.height = h
+      style(g) // resizing the canvas wipes its state
+      g.fillStyle = '#fff'
+      g.fillText(STREAM_TEXT, w / 2, h / 2)
+      const data = g.getImageData(0, 0, w, h).data
+      dots = []
+      for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
+        if (data[(y * w + x) * 4 + 3] < 120 || Math.random() > .94) continue
+        dots.push({
+          lx: (x - w / 2) / scale + (Math.random() - .5) * .4,
+          ly: (y - h / 2) / scale + (Math.random() - .5) * .4,
+          c: FIELD_GLOW[(Math.random() * FIELD_GLOW.length) | 0],
+          size: 1 + Math.random() * 1.1,
+          phase: Math.random() * TAU,
+          d: .05 + (x / w) * .10 + Math.random() * .14,
+          sx: (Math.random() - .5) * 220, sy: -30 - Math.random() * 130,
+          wx: Math.random(), wy: Math.random(),
+          kx: (Math.random() - .5) * 140, ky: (Math.random() - .5) * 90,
+          tx: .08 + Math.random() * .84, ty: .15 + Math.random() * .7,
+        })
+      }
+    }
+
+    const tick = (now: number) => {
+      if (!alive) return
+      raf = requestAnimationFrame(tick)
+      const t = now / 1000
+      if (!beacon?.isConnected) beacon = document.querySelector('.scroll-beacon')
+      if (!flow?.isConnected) flow = document.querySelector('.trade-flow')
+      if (!think?.isConnected) think = document.querySelector<HTMLElement>('.think-target')
+      if (!ticket?.isConnected) ticket = document.querySelector<HTMLElement>('.send-ticket')
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, W, H)
+      if (!beacon || !flow || !dots.length) return
+      const flowDocTop = flow.getBoundingClientRect().top + window.scrollY
+      const p = Math.max(0, Math.min(1, (window.scrollY - 40) / Math.max(flowDocTop + H * .35 - 40, 1)))
+      think?.classList.toggle('is-lit', p > .36)
+      ticket?.classList.toggle('is-charged', p > .68)
+      if (p >= 1) return // every atom has been absorbed; the page owns the glow now
+      const bb = beacon.getBoundingClientRect()
+      const bx = bb.left + bb.width / 2, by = bb.top + bb.height / 2
+      const tr = think?.getBoundingClientRect()
+      const kr = ticket?.getBoundingClientRect()
+      ctx.globalCompositeOperation = 'lighter'
+      ctx.lineCap = 'round'
+      const bob = Math.sin(t * 1.4) * 5 * (1 - Math.min(p * 6, 1)) // the hover stills as launch begins
+      for (const d of dots) {
+        const hx = bx + d.lx + Math.sin(t * 1.8 + d.phase) * 1.1
+        const hy = by + d.ly + bob + Math.cos(t * 1.5 + d.phase) * 1.1
+        let x = hx, y = hy
+        let al = .72 + .28 * Math.sin(t * 2.6 + d.phase)
+        let sz = d.size, cr = d.c[0], cg = d.c[1], cb = d.c[2]
+        let vx = 0, vy = 0
+        const q1 = smooth((p - d.d) / STREAM_L1)
+        if (q1 > 0 && tr) {
+          const wxp = tr.left + d.wx * tr.width
+          const wyp = tr.top + d.wy * tr.height
+          if (q1 < 1) {
+            const c1x = hx + d.sx, c1y = hy + d.sy
+            const e = Math.max(q1 - .05, 0)
+            x = qbez(hx, c1x, wxp, q1); y = qbez(hy, c1y, wyp, q1)
+            vx = x - qbez(hx, c1x, wxp, e); vy = y - qbez(hy, c1y, wyp, e)
+            const hot = Math.max(1 - q1 / .3, 0)
+            cr += (255 - cr) * hot; cg += (255 - cg) * hot; cb += (255 - cb) * hot
+            sz = d.size * (1 + hot * 1.6)
+            al = .95
+          } else {
+            const q2 = smooth((p - d.d - STREAM_L1 - STREAM_HOLD) / STREAM_L2)
+            if (q2 <= 0 || !kr) {
+              x = wxp + Math.sin(t * 3 + d.phase) * 1.6
+              y = wyp + Math.cos(t * 2.6 + d.phase) * 1.6
+              al = .9
+            } else if (q2 < 1) {
+              const tx2 = kr.left + d.tx * kr.width
+              const ty2 = kr.top + d.ty * kr.height
+              const mx = (wxp + tx2) / 2 + d.kx, my = (wyp + ty2) / 2 + d.ky
+              const e = Math.max(q2 - .05, 0)
+              x = qbez(wxp, mx, tx2, q2); y = qbez(wyp, my, ty2, q2)
+              vx = x - qbez(wxp, mx, tx2, e); vy = y - qbez(wyp, my, ty2, e)
+              al = .9 * (1 - q2 * .35)
+            } else continue // absorbed into the ticket
+          }
+        }
+        ctx.fillStyle = `rgb(${cr | 0},${cg | 0},${cb | 0})`
+        if (vx || vy) {
+          ctx.globalAlpha = al * .4
+          ctx.strokeStyle = ctx.fillStyle
+          ctx.lineWidth = Math.min(sz, 2.2)
+          ctx.beginPath(); ctx.moveTo(x - vx, y - vy); ctx.lineTo(x, y); ctx.stroke()
+        }
+        // soft brand-color aura under a near-white core: the "shiny atom" look
+        const halo = sz * 3
+        ctx.globalAlpha = al * .22
+        ctx.fillRect(x - halo / 2, y - halo / 2, halo, halo)
+        ctx.globalAlpha = al
+        ctx.fillStyle = `rgb(${(cr + (255 - cr) * .3) | 0},${(cg + (255 - cg) * .3) | 0},${(cb + (255 - cb) * .3) | 0})`
+        ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz)
+      }
+      // flare when the stream relights "think", again as it pours into the ticket
+      const flare = (r: DOMRect | undefined, q: number, R: number) => {
+        if (!r || q <= 0 || q >= 1) return
+        ctx.globalAlpha = (1 - q) * .8
+        ctx.strokeStyle = '#9ec8ff'
+        ctx.lineWidth = 1 + 2 * (1 - q)
+        ctx.beginPath(); ctx.arc(r.left + r.width / 2, r.top + r.height / 2, 10 + q * R, 0, TAU); ctx.stroke()
+      }
+      flare(tr, (p - .35) / .14, 70)
+      flare(kr, (p - .66) / .14, 90)
+    }
+
+    resize()
+    window.addEventListener('resize', resize)
+    if (document.fonts?.ready) document.fonts.ready.then(() => { if (alive) build() })
+    else build()
+    raf = requestAnimationFrame(tick)
+    return () => {
+      alive = false
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', resize)
+    }
+  }, [reduced])
+
+  if (reduced) return null
+  return <canvas className="stream-canvas" ref={canvasRef} aria-hidden="true" />
+}
+
+/* ============================================================
+   Smart fills: one order worked down the option book. The horse
+   bids the cheapest print first, absorbs each rejection, and
+   walks the price up until the fill stamps in. Row verdicts live
+   in the DOM; comets, rings, and sparks live on a canvas whose
+   endpoints are re-measured from layout every frame. */
+
+const FILL_ROWS = [
+  { price: '1.05', tag: 'ASK', depth: .95 },
+  { price: '1.04', tag: '', depth: .55 },
+  { price: '1.03', tag: '', depth: .72 },
+  { price: '1.02', tag: '', depth: .40 },
+  { price: '1.01', tag: 'BID', depth: .88 },
+]
+
+type FillBeat = { id: 'scan' | 'out' | 'reject' | 'back' | 'fill' | 'reset'; row: number; d: number }
+
+const FILL_SCRIPT: FillBeat[] = [
+  { id: 'scan', row: -1, d: 1050 },
+  { id: 'out', row: 4, d: 820 },
+  { id: 'reject', row: 4, d: 780 },
+  { id: 'back', row: 4, d: 600 },
+  { id: 'out', row: 3, d: 760 },
+  { id: 'reject', row: 3, d: 780 },
+  { id: 'back', row: 3, d: 600 },
+  { id: 'out', row: 2, d: 820 },
+  { id: 'fill', row: 2, d: 2500 },
+  { id: 'reset', row: 2, d: 800 },
+]
+const FILL_LOOP = FILL_SCRIPT.reduce((s, b) => s + b.d, 0)
+const FILL_STAMP = FILL_SCRIPT.findIndex(b => b.id === 'fill')
+
+const FILL_STATUS: Record<FillBeat['id'], (p: string) => string> = {
+  scan: () => 'SCANNING BOOK · SPREAD $0.04',
+  out: p => `ROUTING BID @ $${p}`,
+  reject: p => `REJECTED @ $${p}`,
+  back: () => 'REPRICING ORDER…',
+  fill: p => `FILLED @ $${p}`,
+  reset: p => `FILLED @ $${p}`,
+}
+
+type FillPt = { x: number; y: number }
+
+function SmartFillDemo() {
+  const stageRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const horseRef = useRef<HTMLDivElement>(null)
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [reduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [step, setStep] = useState(() => (reduced ? FILL_STAMP : 0))
+
+  useEffect(() => {
+    if (reduced) return
+    const stage = stageRef.current, canvas = canvasRef.current, horseEl = horseRef.current
+    if (!stage || !canvas || !horseEl) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    let W = 0, H = 0
+    let raf = 0
+    let running = false
+    let alive = true
+    let elapsed = 0
+    let last = 0
+    let lastStep = -1
+    const sparks: { x: number; y: number; vx: number; vy: number; age: number; dur: number; c: [number, number, number] }[] = []
+
+    const resize = () => {
+      const b = stage.getBoundingClientRect()
+      W = b.width; H = b.height
+      canvas.width = W * dpr; canvas.height = H * dpr
+      canvas.style.width = `${W}px`; canvas.style.height = `${H}px`
+    }
+
+    const burst = (x: number, y: number, colors: [number, number, number][], n: number, up = 0) => {
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * TAU + Math.random() * .5
+        const v = 55 + Math.random() * 95
+        sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * .75 - up, age: 0, dur: .5 + Math.random() * .3, c: colors[(Math.random() * colors.length) | 0] })
+      }
+    }
+
+    const tick = (now: number) => {
+      if (!alive || !running) return
+      raf = requestAnimationFrame(tick)
+      const dt = Math.min((now - (last || now)) / 1000, .05)
+      last = now
+      elapsed += dt * 1000
+      const tl = elapsed % FILL_LOOP
+      let i = 0, acc = 0
+      while (i < FILL_SCRIPT.length - 1 && tl >= acc + FILL_SCRIPT[i].d) { acc += FILL_SCRIPT[i].d; i++ }
+      const beat = FILL_SCRIPT[i]
+      const u = Math.min((tl - acc) / beat.d, 1)
+      const t = elapsed / 1000
+
+      const sb = stage.getBoundingClientRect()
+      const hb = horseEl.getBoundingClientRect()
+      const p0: FillPt = { x: hb.right - sb.left + 4, y: hb.top - sb.top + hb.height / 2 }
+      const rowPt = (r: number): FillPt => {
+        const el = rowRefs.current[r]
+        if (!el) return p0
+        const rb = el.getBoundingClientRect()
+        return { x: rb.left - sb.left - 7, y: rb.top - sb.top + rb.height / 2 }
+      }
+      // Quadratic arc that leaves the horse near-horizontal, then dives
+      // into the row from the left.
+      const pathTo = (r: number): FillPt[] => {
+        const p2 = rowPt(r)
+        return [p0, { x: (p0.x + p2.x) / 2, y: p0.y + (p2.y - p0.y) * .16 }, p2]
+      }
+      const at = (pts: FillPt[], q: number): FillPt => ({ x: qbez(pts[0].x, pts[1].x, pts[2].x, q), y: qbez(pts[0].y, pts[1].y, pts[2].y, q) })
+
+      const stepNow = Math.floor(elapsed / FILL_LOOP) * FILL_SCRIPT.length + i
+      if (stepNow !== lastStep) {
+        lastStep = stepNow
+        setStep(stepNow)
+        if (beat.id === 'reject') { const pt = rowPt(beat.row); burst(pt.x, pt.y, [[255, 110, 97], [255, 170, 130]], 13) }
+        if (beat.id === 'fill') { const pt = rowPt(beat.row); burst(pt.x, pt.y, [[86, 230, 180], [190, 255, 228], [125, 183, 255]], 26, 30) }
+      }
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, W, H)
+      ctx.globalCompositeOperation = 'lighter'
+
+      const guide = (pts: FillPt[], a: number, r: number, g: number, b: number) => {
+        if (a <= 0) return
+        ctx.fillStyle = `rgb(${r},${g},${b})`
+        for (let k = 0; k <= 24; k++) {
+          const q = k / 24
+          const pt = at(pts, q)
+          ctx.globalAlpha = a * .3 * (.45 + .55 * Math.sin(t * 2.8 - q * 10))
+          ctx.fillRect(pt.x - .8, pt.y - .8, 1.7, 1.7)
+        }
+      }
+      const ring = (x: number, y: number, q: number, r: number, g: number, b: number, R: number) => {
+        if (q <= 0 || q >= 1) return
+        ctx.globalAlpha = (1 - q) * .85
+        ctx.strokeStyle = `rgb(${r},${g},${b})`
+        ctx.lineWidth = .5 + 2.2 * (1 - q)
+        ctx.beginPath(); ctx.arc(x, y, 6 + q * R, 0, TAU); ctx.stroke()
+      }
+      const comet = (pts: FillPt[], head: number, dir: 1 | -1, r: number, g: number, b: number) => {
+        ctx.lineCap = 'round'
+        for (let k = 0; k < 15; k++) {
+          const t1 = head - dir * k * .028
+          const t0 = head - dir * (k + 1) * .028
+          const c1 = Math.max(0, Math.min(1, t1)), c0 = Math.max(0, Math.min(1, t0))
+          if (c0 === c1) continue
+          const a1 = at(pts, c0), a2 = at(pts, c1)
+          ctx.globalAlpha = .8 * (1 - k / 15)
+          ctx.lineWidth = 3.2 * (1 - k / 19)
+          ctx.strokeStyle = `rgb(${r},${g},${b})`
+          ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.stroke()
+        }
+        const hp = at(pts, Math.max(0, Math.min(1, head)))
+        for (const [rad, al, cr, cg, cb] of [[8, .14, r, g, b], [4.5, .4, r, g, b], [2.1, 1, 240, 250, 255]]) {
+          ctx.globalAlpha = al
+          ctx.fillStyle = `rgb(${cr},${cg},${cb})`
+          ctx.beginPath(); ctx.arc(hp.x, hp.y, rad, 0, TAU); ctx.fill()
+        }
+      }
+
+      if (beat.id === 'scan') {
+        // a thin beam sweeps the book top to bottom while the AI reads it
+        const el0 = rowRefs.current[0], el4 = rowRefs.current[4]
+        if (el0 && el4) {
+          const b0 = el0.getBoundingClientRect(), b4 = el4.getBoundingClientRect()
+          const y = (b0.top + b0.height / 2 - sb.top) + (b4.top - b0.top) * smooth(u)
+          const x0 = b0.left - sb.left, x1 = b0.right - sb.left
+          const gr = ctx.createLinearGradient(x0, 0, x1, 0)
+          gr.addColorStop(0, 'rgba(98,182,255,0)'); gr.addColorStop(.5, 'rgba(150,205,255,.8)'); gr.addColorStop(1, 'rgba(98,182,255,0)')
+          ctx.globalAlpha = .8 * Math.sin(u * Math.PI)
+          ctx.fillStyle = gr
+          ctx.fillRect(x0, y - 1, x1 - x0, 2)
+          ctx.globalAlpha *= .3
+          ctx.fillRect(x0, y - 7, x1 - x0, 14)
+        }
+      } else if (beat.id === 'out') {
+        const pts = pathTo(beat.row)
+        guide(pts, 1, 143, 194, 255)
+        comet(pts, smooth(u), 1, 129, 183, 255)
+        ring(p0.x - 4, p0.y, u / .4, 125, 183, 255, 26)
+      } else if (beat.id === 'reject') {
+        const pts = pathTo(beat.row)
+        const pt = rowPt(beat.row)
+        guide(pts, 1 - u, 255, 138, 125)
+        ring(pt.x, pt.y, smooth(u * 1.4), 255, 110, 97, 40)
+      } else if (beat.id === 'back') {
+        const pts = pathTo(beat.row)
+        guide(pts, .35 * (1 - u), 255, 138, 125)
+        comet(pts, 1 - smooth(u), -1, 255, 138, 125)
+      } else if (beat.id === 'fill') {
+        const pts = pathTo(beat.row)
+        const pt = rowPt(beat.row)
+        guide(pts, Math.max(0, 1 - u * 2), 89, 230, 180)
+        ring(pt.x, pt.y, u * 2.4, 86, 230, 180, 52)
+        ring(pt.x, pt.y, (u - .12) * 2.4, 86, 230, 180, 74)
+      }
+
+      for (let k = sparks.length - 1; k >= 0; k--) {
+        const s = sparks[k]
+        s.age += dt
+        if (s.age >= s.dur) { sparks.splice(k, 1); continue }
+        s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 150 * dt
+        ctx.globalAlpha = (1 - s.age / s.dur) * .9
+        ctx.fillStyle = `rgb(${s.c[0]},${s.c[1]},${s.c[2]})`
+        ctx.fillRect(s.x - 1, s.y - 1, 2.2, 2.2)
+      }
+    }
+
+    resize()
+    const ro = new ResizeObserver(resize)
+    ro.observe(stage)
+    // Only burn frames while the card is actually on screen.
+    const io = new IntersectionObserver(([en]) => {
+      if (en.isIntersecting && !running) { running = true; last = 0; raf = requestAnimationFrame(tick) }
+      else if (!en.isIntersecting && running) { running = false; cancelAnimationFrame(raf) }
+    }, { threshold: .2 })
+    io.observe(stage)
+    return () => {
+      alive = false
+      running = false
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      io.disconnect()
+    }
+  }, [reduced])
+
+  const idx = step % FILL_SCRIPT.length
+  const beat = FILL_SCRIPT[idx]
+  const price = beat.row >= 0 ? FILL_ROWS[beat.row].price : ''
+  const status = FILL_STATUS[beat.id](price)
+  const cleared = beat.id === 'reset'
+  const bad = beat.id === 'reject' || beat.id === 'back'
+  const good = beat.id === 'fill' || beat.id === 'reset'
+  const rejectedBefore = (r: number) => FILL_SCRIPT.some((b, k) => k < idx && b.id === 'reject' && b.row === r)
+
+  return <div className="fill-stage" data-fill-beat={beat.id} ref={stageRef} aria-hidden="true">
+    <canvas className="fill-canvas" ref={canvasRef} />
+    <div className="fill-left">
+      <div className="fill-horse" ref={horseRef}><HorseMark /></div>
+      <small className="fill-ai-tag">STRATFOLIO AI</small>
+      <div className={`fill-status ${bad ? 'is-bad' : ''} ${good ? 'is-good' : ''}`}><span key={status}>{status}</span></div>
+      <span className={`fill-saved ${good ? 'show' : ''}`}><Sparkles size={11} /> SAVED $0.02 vs ASK</span>
+    </div>
+    <div className="fill-book">
+      <small className="fill-book-head"><span>OPTION BOOK</span><span>MU $500 CALL</span></small>
+      {FILL_ROWS.map((r, ri) => {
+        const rejecting = beat.id === 'reject' && beat.row === ri
+        const cls = [
+          'fill-row',
+          beat.id === 'out' && beat.row === ri ? 'is-target' : '',
+          rejecting ? 'is-reject' : '',
+          !cleared && !rejecting && rejectedBefore(ri) ? 'was-rejected' : '',
+          beat.id === 'fill' && beat.row === ri ? 'is-filled' : '',
+        ].join(' ')
+        return <div key={r.price} className={cls} ref={el => { rowRefs.current[ri] = el }}>
+          <span className={`fill-tag ${r.tag === 'ASK' ? 'tag-ask' : r.tag === 'BID' ? 'tag-bid' : ''}`}>{r.tag}</span>
+          <strong>${r.price}</strong>
+          <span className="fill-depth"><i style={{ width: `${r.depth * 100}%` }} /></span>
+          <span className="fill-verdict-slot">
+            <span className="fill-verdict verdict-x"><X size={13} strokeWidth={3} /></span>
+            <span className="fill-verdict verdict-check"><Check size={13} strokeWidth={3} /></span>
+          </span>
+        </div>
+      })}
+    </div>
+  </div>
+}
+
 export function App() {
   const isMobile = useIsMobile()
   const { scrollYProgress } = useScroll()
@@ -879,15 +1332,17 @@ export function App() {
       <div className="hero-copy">
         <motion.h1 initial={{ opacity: 0, y: 36 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .9, ease: [0.16, 1, 0.3, 1] }}>AI financial intelligence<br /><em>platform that never sleeps.</em></motion.h1>
         <Fade delay={.18}><p>StratFolio turns every position into a living thesis—monitoring markets, news, and risk so you always know the next move.</p></Fade>
-        <Fade delay={.38} className="trust-row"><span><Check /> multi-brokerage support</span><span><Check /> user-guided agentic workflows</span><span><Check /> custom mcp servers</span></Fade>
+        <Fade delay={.38} className="trust-row"><span><Check /> multi-brokerage support</span><span><Check /> user-guided agentic workflows</span></Fade>
       </div>
       <motion.div className="hero-media" style={{ y: heroY }}>
         <div className="orb orb-one" /><div className="orb orb-two" />
-        <div className="mobile-screens" aria-label="StratFolio mobile app screens"><div className="mobile-screen screen-one"><img src={asset('m2-screen.png')} alt="StratFolio portfolio plans screen" /></div><div className="mobile-screen screen-two"><img src={asset('desktop/m3.png')} alt="StratFolio position thesis dashboard" /></div><span className="dashboard-glow" /></div>
+        <div className="mobile-screens" aria-label="StratFolio app screens"><div className="mobile-screen screen-one"><img src={asset('m2-screen.png')} alt="StratFolio portfolio plans screen" /></div><div className="desk-screen"><i className="desk-bar" aria-hidden="true"><b /><b /><b /></i><img src={asset('desk.png')} alt="StratFolio desktop dashboard" /></div><span className="dashboard-glow" /></div>
       </motion.div>
-      <div className="hero-qr" aria-label="Install StratFolio demo on iOS or Android"><img src={asset('install-qr.png')} alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO<br />ON IOS/ANDROID</span></div>
-      <a href={`#${BOTTOM_ANCHOR}`} className="scroll-mark" onClick={scrollToBottom}><span>SCROLL TO EXPLORE</span><i className="scroll-rail" aria-hidden="true"><b /><b /><b /></i></a>
+      <a className="hero-qr" href={installUrl} target="_blank" rel="noreferrer" aria-label="Open the StratFolio demo, or scan the code to install it on your phone"><img src={asset('install-qr.png')} alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO</span></a>
+      <a href={`#${BOTTOM_ANCHOR}`} className="scroll-beacon" onClick={scrollToBottom} aria-label="Scroll for more"><span>SCROLL FOR MORE</span></a>
     </section>
+
+    <ScrollStream />
 
     <TradeFlow mobile={isMobile} />
 
@@ -898,11 +1353,14 @@ export function App() {
 
     <section className="feature-grid" id="intelligence">
       <Fade className="feature-card feature-wide">
-        <div className="feature-copy"><span className="icon"><BrainCircuit /></span><p className="label">CONTEXT, NOT CHATTER</p><h3>Intelligence that knows your position.</h3><p>Ask a real portfolio question. Get an answer grounded in your contract, catalysts, conviction, and risk—not generic market commentary.</p></div>
-        <AppShot src={asset('desktop/m3.png')} alt="StratFolio position-specific AI analysis" />
+        <div className="feature-copy"><span className="icon"><BrainCircuit /></span><p className="label">ALWAYS THINKING</p><h3>AI-generated trade theses at your fingertips.</h3><p>StratFolio AI learns from your reprompts, plans, and actions, to give you personalized trade theses which you can steer in your desired direction, or promote to concrete trade plans.</p></div>
+        <div className="thesis-shots">
+          <figure className="thesis-shot shot-thesis"><img src={asset('desktop/msft.png')} alt="AI-generated MSFT trade thesis with conviction score, targets, and risk" loading="lazy" /><figcaption><span>01</span> The thesis, written for your book</figcaption></figure>
+          <figure className="thesis-shot shot-steer"><img src={asset('desktop/follow.png')} alt="Steering a thesis with a follow-up conversation" loading="lazy" /><figcaption><span>02</span> Steer it, or promote it to a plan</figcaption></figure>
+        </div>
       </Fade>
-      <Fade className="feature-card stat-card" delay={.08}><span className="icon"><ChartNoAxesCombined /></span><p className="label">ONE CLEAR VIEW</p><h3>Every account.<br />One intelligent book.</h3><div className="broker-cloud"><span>Robinhood</span><span>Schwab</span><span>Fidelity</span><span>E*TRADE</span><span>Webull</span><span>IBKR</span></div></Fade>
-      <Fade className="feature-card metric-card" delay={.14}><span className="metric">24/7</span><h3>Your thesis never clocks out.</h3><p>Continuous monitoring across price, news, catalysts, and every rule you approve.</p><div className="wave"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></Fade>
+      <Fade className="feature-card stat-card" delay={.08}><span className="icon"><ChartNoAxesCombined /></span><p className="label">AI SMART FILLS</p><h3>Let AI get you the best order fills.</h3><SmartFillDemo /></Fade>
+      <Fade className="feature-card metric-card" delay={.14}><span className="metric">24/7</span><h3>Your portfolio never clocks out.</h3><p>Continuous monitoring across price, news, catalysts, and every rule you approve.</p><div className="wave"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div></Fade>
     </section>
 
     <section className="final-cta">

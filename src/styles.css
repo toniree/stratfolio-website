@@ -310,3 +310,172 @@ main{overflow:clip}
   .flow-node .flow-tagline{width:max-content;margin-top:10px;font-size:10.5px;line-height:1.4}
   .trade-flow .success-badge{display:none}
 }
+
+/* ============================================================
+   Desktop: align the QR code and the scroll cue to the centre of the
+   hero copy column instead of the viewport. */
+@media(min-width:801px){
+  .hero-qr,.scroll-mark{left:max(7vw,60px)!important;width:min(660px,52vw)!important;transform:none!important}
+  .mobile-screens{transform:scale(1.3)!important;transform-origin:right bottom}
+  .mobile-screens .desk-screen{transform:scale(1.3);transform-origin:right bottom}
+}
+@media(min-width:801px) and (max-width:1100px){
+  .hero-qr,.scroll-mark{left:5vw!important;width:57vw!important}
+}
+
+
+/* ============================================================
+   Hero mockups: the desktop dashboard plus one phone, both upright,
+   bottom-aligned, and sized to the blank column right of the copy. */
+.mobile-screens{display:flex;align-items:flex-end;justify-content:flex-end;top:auto!important;bottom:40px;height:auto!important}
+.desk-screen{position:relative;flex:1 1 auto;min-width:0;overflow:hidden;border:1px solid rgba(121,172,255,.28);border-radius:14px;background:#0b111b;box-shadow:0 34px 70px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.06)}
+.desk-bar{display:flex;align-items:center;gap:6px;height:24px;padding:0 11px;background:#141c28;border-bottom:1px solid rgba(255,255,255,.07)}
+.desk-bar b{flex:none;width:8px;height:8px;border-radius:50%;background:#2f3b4d}
+.desk-screen img{display:block;width:100%;height:auto}
+.mobile-screens .mobile-screen{position:relative!important;flex:0 0 33%;left:auto!important;right:auto!important;top:auto!important;width:auto!important;height:auto!important;aspect-ratio:206/436;margin-right:-6%;transform:none!important;border-width:6px!important;border-radius:30px!important;z-index:3}
+.mobile-screens .mobile-screen img{height:100%}
+@media(min-width:801px){.mobile-screens .mobile-screen{transform:rotate(-10deg)!important}}
+/* Widths keep the block clear of the copy column at every desktop size:
+   copy ends at 7vw + min(660px,52vw); the block stops 40px from the edge. */
+@media(min-width:1270px){.mobile-screens{width:min(760px,calc(93vw - 700px))!important;right:calc(40px - 12vw)!important}}
+@media(min-width:1101px) and (max-width:1269px){.mobile-screens{width:calc(41vw - 40px)!important;right:calc(40px - 12vw)!important}}
+@media(min-width:801px) and (max-width:1100px){.mobile-screens{width:calc(38vw - 34px)!important;right:calc(34px - 3vw)!important}.desk-bar{height:18px;gap:4px}.desk-bar b{width:6px;height:6px}}
+@media(max-width:800px){
+  /* Page 1: anchor the pair to the bottom of the fold so it never runs
+     into the copy above or the next section below. */
+  .hero-media{top:auto!important;bottom:26px;height:auto!important}
+  .mobile-screens{width:min(378px,calc(100vw - 22px))!important;right:-28px!important;bottom:40px;transform:scale(1.3)!important;transform-origin:right bottom}
+  .mobile-screens .mobile-screen{transform:translateX(24px) rotate(-10deg)!important}
+  .desk-screen{border-radius:10px;transform:scale(1.1);transform-origin:right bottom}
+  .desk-bar{height:15px;gap:4px;padding:0 7px}
+  .desk-bar b{width:5px;height:5px}
+  .mobile-screens .mobile-screen{border-width:4px!important;border-radius:19px!important}
+}
+@media(max-width:800px) and (max-height:780px){
+  .hero-media{bottom:18px}
+  .mobile-screens{width:min(310px,calc(100vw - 22px))!important}
+}
+@media(max-width:800px) and (max-height:680px){
+  .hero-media{bottom:12px}
+  .mobile-screens{width:min(244px,calc(100vw - 26px))!important}
+}
+
+/* ============================================================
+   "Always thinking" feature card: the copy sits above a two-step
+   pair of app shots — the generated thesis, then steering it. */
+.feature-wide{display:block!important;padding:58px 50px 50px!important;min-height:0!important}
+.feature-wide .feature-copy{width:100%!important;max-width:640px}
+.feature-wide .feature-copy p:not(.label){max-width:620px}
+.thesis-shots{display:flex;align-items:flex-start;gap:30px;margin-top:44px}
+.thesis-shot{flex:1 1 0;min-width:0;margin:0;position:relative}
+.thesis-shot img{display:block;width:100%;height:auto;object-fit:cover;border:1px solid rgba(121,172,255,.26);border-radius:20px;background:#0b111b;box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.05)}
+/* Trim the clipped header band off the thesis shot and the dead space
+   under the conversation, so the two panels read as a matched pair. */
+.shot-thesis img{aspect-ratio:855/1203;object-position:center bottom}
+.shot-steer img{aspect-ratio:857/1120;object-position:center top}
+.thesis-shot figcaption{display:flex;align-items:center;gap:9px;margin-top:15px;color:#8e9db2;font:500 10px DM Mono,monospace;letter-spacing:.13em;text-transform:uppercase}
+.thesis-shot figcaption span{display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:7px;border:1px solid rgba(91,166,255,.3);background:rgba(47,123,255,.12);color:#77b0ff;font-size:9px}
+/* The steer step trails the thesis it answers. */
+.shot-steer{margin-top:44px}
+.shot-steer img{border-color:rgba(121,172,255,.34);box-shadow:0 30px 60px rgba(0,0,0,.5),0 0 0 1px rgba(66,132,255,.12),inset 0 0 0 1px rgba(255,255,255,.05)}
+@media(max-width:800px){
+  .feature-wide{padding:38px 22px 34px!important}
+  .thesis-shots{display:block;margin-top:30px}
+  .thesis-shot{width:84%}
+  .shot-steer{width:88%;margin:24px 0 0 auto}
+  .thesis-shot figcaption{margin-top:11px;font-size:9px;letter-spacing:.1em}
+}
+
+/* The hero QR is both a link (desktop click → the app in a new tab) and a
+   scan target (phone camera → the same install URL encoded in the code). */
+.hero-qr{pointer-events:auto;cursor:pointer;text-decoration:none;transition:color .2s ease}
+.hero-qr img{transition:filter .2s ease,box-shadow .2s ease,transform .2s ease}
+.hero-qr:hover{color:#9dc2ff}
+.hero-qr:hover img{filter:brightness(1);box-shadow:0 0 0 1px rgba(91,166,255,.45),0 14px 34px rgba(9,17,30,.65);transform:translateY(-2px)}
+.hero-qr:focus-visible{outline:2px solid #4d98ff;outline-offset:8px;border-radius:10px}
+
+/* Smart-fills card: no badge row any more, so centre the remaining
+   copy rather than leaving it stranded at the top. */
+.stat-card{display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.stat-card h3{margin-bottom:0}
+
+/* ============================================================
+   Smart-fills card: the horse works one order down the option
+   book — canvas comets carry the bid out, rejections stamp an X
+   and bounce it home, the $1.03 fill lands with a green burst. */
+.fill-stage{position:relative;display:flex;align-items:center;gap:22px;width:100%;margin-top:36px}
+.fill-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.fill-left{position:relative;z-index:2;flex:none;display:flex;flex-direction:column;align-items:center;gap:10px;width:134px;text-align:center}
+.fill-horse{position:relative;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(77,152,255,.6);background:rgba(8,17,31,.92);box-shadow:0 0 0 6px rgba(77,152,255,.07),0 0 26px rgba(77,152,255,.38);transition:box-shadow .45s,border-color .45s}
+.fill-stage[data-fill-beat="scan"] .fill-horse,.fill-stage[data-fill-beat="out"] .fill-horse{box-shadow:0 0 0 7px rgba(77,152,255,.13),0 0 44px rgba(77,152,255,.7)}
+.fill-stage[data-fill-beat="fill"] .fill-horse{border-color:rgba(56,217,161,.55);box-shadow:0 0 0 7px rgba(56,217,161,.1),0 0 40px rgba(56,217,161,.45)}
+.fill-horse .horse-mark{width:54px;height:54px;transform:none;filter:drop-shadow(0 0 8px rgba(91,166,255,.9)) drop-shadow(0 0 18px rgba(130,105,255,.5))}
+.fill-horse .horse-trace,.fill-horse .horse-detail{animation:none;stroke-dashoffset:0;opacity:1}
+.fill-horse .horse-trace-soft{opacity:.55}
+.fill-horse .horse-arrow{fill:#e3f3ff;opacity:.5}
+.fill-ai-tag{font:500 8px "DM Mono",monospace;letter-spacing:.22em;color:#627087}
+.fill-status{min-height:28px}
+.fill-status span{display:block;font:500 9.5px "DM Mono",monospace;letter-spacing:.1em;line-height:1.5;color:#8ea0b8;animation:fill-status-in .34s ease}
+.fill-status.is-bad span{color:#ff8a7d}
+.fill-status.is-good span{color:#4fe3b0}
+@keyframes fill-status-in{from{opacity:0;transform:translateY(7px)}}
+.fill-saved{display:inline-flex;align-items:center;gap:6px;font:500 8.5px "DM Mono",monospace;letter-spacing:.12em;color:#7de3b3;border:1px solid rgba(56,217,161,.35);background:rgba(56,217,161,.08);padding:6px 10px;border-radius:99px;opacity:0;transform:translateY(6px) scale(.9);transition:.45s cubic-bezier(.34,1.56,.64,1)}
+.fill-saved.show{opacity:1;transform:none}
+.fill-saved svg{width:11px;flex:none}
+.fill-book{position:relative;z-index:2;flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.fill-book-head{display:flex;justify-content:space-between;font:500 8.5px "DM Mono",monospace;letter-spacing:.16em;color:#66758a;padding:0 4px 3px}
+.fill-row{display:flex;align-items:center;gap:11px;height:46px;padding:0 12px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(13,20,31,.74);transition:border-color .35s,background .35s,box-shadow .35s,opacity .35s}
+.fill-row strong{font:500 14px "DM Mono",monospace;letter-spacing:-.02em;color:#dfe8f4;transition:color .35s}
+.fill-tag{width:26px;flex:none;font:500 8px "DM Mono",monospace;letter-spacing:.14em;color:#4c5a6d}
+.fill-tag.tag-ask{color:#ff8a7d}
+.fill-tag.tag-bid{color:#38d9a1}
+.fill-depth{flex:1;height:3px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.fill-depth i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,rgba(98,182,255,.6),rgba(130,105,255,.35))}
+.fill-verdict-slot{position:relative;width:22px;height:22px;flex:none}
+.fill-verdict{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;opacity:0;transform:scale(.2) rotate(-45deg);transition:.4s cubic-bezier(.34,1.56,.64,1)}
+.fill-verdict svg{width:13px}
+.verdict-x{border:1px solid rgba(240,79,69,.55);background:rgba(240,79,69,.14);color:#ff7d70}
+.verdict-check{border:1px solid rgba(56,217,161,.6);background:rgba(56,217,161,.16);color:#5ceab5}
+.fill-row.is-target{border-color:rgba(91,166,255,.6);background:rgba(18,32,52,.8);box-shadow:0 0 22px rgba(47,123,255,.22)}
+.fill-row.is-reject{border-color:rgba(240,79,69,.6);background:rgba(56,17,20,.45);box-shadow:0 0 22px rgba(240,79,69,.18);animation:fill-shake .5s cubic-bezier(.36,.07,.19,.97)}
+.fill-row.is-reject .verdict-x{opacity:1;transform:scale(1) rotate(0deg)}
+.fill-row.was-rejected{border-color:rgba(240,79,69,.26);opacity:.62}
+.fill-row.was-rejected .verdict-x{opacity:.6;transform:scale(.82) rotate(0deg)}
+.fill-row.is-filled{border-color:rgba(56,217,161,.75);background:rgba(13,45,37,.5);box-shadow:0 0 30px rgba(56,217,161,.25)}
+.fill-row.is-filled .verdict-check{opacity:1;transform:scale(1) rotate(0deg);box-shadow:0 0 18px 4px rgba(56,217,161,.55)}
+.fill-row.is-filled strong{color:#8df0cd}
+@keyframes fill-shake{20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@media (prefers-reduced-motion:reduce){.fill-row.is-reject{animation:none}.fill-status span{animation:none}.fill-saved{transition:none}}
+@media(max-width:800px){
+  .fill-stage{gap:14px;margin-top:30px}
+  .fill-left{width:98px}
+  .fill-horse{width:72px;height:72px}
+  .fill-horse .horse-mark{width:44px;height:44px}
+  .fill-status span{font-size:8.5px}
+  .fill-row{height:42px;padding:0 10px;gap:8px}
+  .fill-row strong{font-size:12.5px}
+}
+
+/* ============================================================
+   Scroll stream: "SCROLL FOR MORE" hovers in glow atoms at the
+   base of the first viewport; scrolling detonates it, relights
+   the word "think" in the flow heading, and pours the atoms
+   into the USER TRADE RULE ticket. The anchor <a> is invisible —
+   the fixed canvas paints the atoms at its live position. */
+.scroll-beacon{position:absolute;z-index:6;left:50%;transform:translateX(-50%);width:236px;height:52px;top:min(calc(100vh - 90px),calc(100% - 44px));top:min(calc(100svh - 90px),calc(100% - 44px))}
+.scroll-beacon span{position:absolute;inset:0;display:grid;place-items:center;font:600 12px "DM Mono",monospace;letter-spacing:.3em;color:#8fb4e8;opacity:0}
+@media(min-width:801px){
+  .scroll-beacon{left:calc(max(7vw,60px) + min(660px,52vw)/2)}
+  /* On short desktop viewports the hero QR would sit right where the
+     beacon lands — lift it just enough to keep the stack clear. */
+  .hero-qr{bottom:max(217px,calc(100% - 100vh + 158px));bottom:max(217px,calc(100% - 100svh + 158px))}
+}
+@media(min-width:801px) and (max-width:1100px){
+  .scroll-beacon{left:calc(5vw + 57vw/2)}
+}
+.stream-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+.think-target{font-style:normal;transition:color .5s ease,text-shadow .5s ease}
+.think-target.is-lit{color:#e2efff;text-shadow:0 0 12px rgba(125,183,255,.95),0 0 30px rgba(130,105,255,.65)}
+.send-ticket{transition:border-color .5s ease,box-shadow .5s ease}
+.send-ticket.is-charged{border-color:rgba(129,186,255,.85);box-shadow:0 0 60px rgba(47,123,255,.5),0 0 22px rgba(125,183,255,.35)}
+@media (prefers-reduced-motion:reduce){.scroll-beacon span{opacity:1}}
