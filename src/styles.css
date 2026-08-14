@@ -462,8 +462,8 @@ main{overflow:clip}
    the word "think" in the flow heading, and pours the atoms
    into the USER TRADE RULE ticket. The anchor <a> is invisible —
    the fixed canvas paints the atoms at its live position. */
-.scroll-beacon{position:absolute;z-index:6;left:50%;transform:translateX(-50%);width:236px;height:52px;top:min(calc(100vh - 90px),calc(100% - 44px));top:min(calc(100svh - 90px),calc(100% - 44px))}
-.scroll-beacon span{position:absolute;inset:0;display:grid;place-items:center;font:600 12px "DM Mono",monospace;letter-spacing:.3em;color:#8fb4e8;opacity:0}
+.scroll-beacon{position:absolute;z-index:6;left:50%;transform:translateX(-50%);width:180px;height:34px;top:min(calc(100vh - 90px),calc(100% - 44px));top:min(calc(100svh - 90px),calc(100% - 44px))}
+.scroll-beacon span{position:absolute;inset:0;display:grid;place-items:center;font:italic 400 10px "DM Mono",monospace;letter-spacing:.24em;color:#5f7da8;opacity:0}
 @media(min-width:801px){
   .scroll-beacon{left:calc(max(7vw,60px) + min(660px,52vw)/2)}
   /* On short desktop viewports the hero QR would sit right where the
@@ -479,3 +479,10 @@ main{overflow:clip}
 .send-ticket{transition:border-color .5s ease,box-shadow .5s ease}
 .send-ticket.is-charged{border-color:rgba(129,186,255,.85);box-shadow:0 0 60px rgba(47,123,255,.5),0 0 22px rgba(125,183,255,.35)}
 @media (prefers-reduced-motion:reduce){.scroll-beacon span{opacity:1}}
+
+/* Mobile: the beacon leaves the viewport edge and tucks in-flow right
+   under the trust row ("…agentic workflows"), at flag scale. */
+@media(max-width:800px){
+  .scroll-beacon{position:relative;top:auto;left:0;transform:none;width:122px;height:26px;margin:18px 0 0 178px;display:block}
+  .scroll-beacon span{font-size:8px;letter-spacing:.18em}
+}

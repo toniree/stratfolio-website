@@ -856,10 +856,10 @@ function DataMatrix() {
    flow heading, then pour into the USER TRADE RULE ticket. All
    anchors are live-measured, so the stream tracks layout. */
 
-const STREAM_TEXT = 'SCROLL FOR MORE'
-const STREAM_L1 = .26
+const STREAM_TEXT = 'scroll for more'
+const STREAM_L1 = .36
 const STREAM_HOLD = .06
-const STREAM_L2 = .24
+const STREAM_L2 = .28
 
 type StreamDot = {
   lx: number; ly: number            // offset from the beacon center
@@ -884,6 +884,7 @@ function ScrollStream() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
     let W = 0, H = 0
     let dots: StreamDot[] = []
+    let textW = 1
     let raf = 0
     let alive = true
     let beacon: Element | null = null
@@ -903,28 +904,30 @@ function ScrollStream() {
       const g = cv.getContext('2d')
       if (!g) return
       const style = (s: CanvasRenderingContext2D) => {
-        s.font = `600 ${14 * scale}px "DM Mono",monospace`
-        ;(s as unknown as { letterSpacing?: string }).letterSpacing = `${4 * scale}px`
+        // true regular weight — synthesized bold reads clogged at dot scale
+        s.font = `italic 400 ${21 * scale}px "DM Mono",monospace`
+        ;(s as unknown as { letterSpacing?: string }).letterSpacing = `${5 * scale}px`
         s.textAlign = 'center'; s.textBaseline = 'middle'
       }
       style(g)
       const w = Math.ceil(g.measureText(STREAM_TEXT).width) + 12
-      const h = 24 * scale
+      const h = 30 * scale
       cv.width = w; cv.height = h
       style(g) // resizing the canvas wipes its state
       g.fillStyle = '#fff'
       g.fillText(STREAM_TEXT, w / 2, h / 2)
       const data = g.getImageData(0, 0, w, h).data
+      textW = w / scale
       dots = []
       for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) {
-        if (data[(y * w + x) * 4 + 3] < 120 || Math.random() > .94) continue
+        if (data[(y * w + x) * 4 + 3] < 120 || Math.random() > .34) continue
         dots.push({
           lx: (x - w / 2) / scale + (Math.random() - .5) * .4,
           ly: (y - h / 2) / scale + (Math.random() - .5) * .4,
           c: FIELD_GLOW[(Math.random() * FIELD_GLOW.length) | 0],
-          size: 1 + Math.random() * 1.1,
+          size: .7 + Math.random() * .7,
           phase: Math.random() * TAU,
-          d: .05 + (x / w) * .10 + Math.random() * .14,
+          d: .04 + (x / w) * .12 + Math.random() * .12,
           sx: (Math.random() - .5) * 220, sy: -30 - Math.random() * 130,
           wx: Math.random(), wy: Math.random(),
           kx: (Math.random() - .5) * 140, ky: (Math.random() - .5) * 90,
@@ -945,9 +948,9 @@ function ScrollStream() {
       ctx.clearRect(0, 0, W, H)
       if (!beacon || !flow || !dots.length) return
       const flowDocTop = flow.getBoundingClientRect().top + window.scrollY
-      const p = Math.max(0, Math.min(1, (window.scrollY - 40) / Math.max(flowDocTop + H * .35 - 40, 1)))
-      think?.classList.toggle('is-lit', p > .36)
-      ticket?.classList.toggle('is-charged', p > .68)
+      const p = Math.max(0, Math.min(1, (window.scrollY - 40) / Math.max(flowDocTop + H * .6 - 40, 1)))
+      think?.classList.toggle('is-lit', p > .42)
+      ticket?.classList.toggle('is-charged', p > .76)
       if (p >= 1) return // every atom has been absorbed; the page owns the glow now
       const bb = beacon.getBoundingClientRect()
       const bx = bb.left + bb.width / 2, by = bb.top + bb.height / 2
@@ -955,13 +958,21 @@ function ScrollStream() {
       const kr = ticket?.getBoundingClientRect()
       ctx.globalCompositeOperation = 'lighter'
       ctx.lineCap = 'round'
-      const bob = Math.sin(t * 1.4) * 5 * (1 - Math.min(p * 6, 1)) // the hover stills as launch begins
+      const fs = W <= 800 ? .41 : .48 // formation scale: the glyphs shrink, the atoms just pack tighter
+      const szf = fs * 1.3
+      const settle = 1 - Math.min(p * 6, 1) // the breeze stills as launch begins
       for (const d of dots) {
-        const hx = bx + d.lx + Math.sin(t * 1.8 + d.phase) * 1.1
-        const hy = by + d.ly + bob + Math.cos(t * 1.5 + d.phase) * 1.1
+        // cloth wave: pinned at the left edge like a flag on a mast, the
+        // ripple travels right and grows toward the free end, and a sheen
+        // band rides the same wave like light catching the fabric
+        const u = d.lx / textW + .5
+        const wave = u * TAU * 1.15 - t * 2.1 + d.ly * .015
+        const amp = (1 + u * 3.6) * settle * fs * 1.4
+        const hx = bx + d.lx * fs + Math.cos(wave) * amp * .3
+        const hy = by + d.ly * fs + Math.sin(wave) * amp
         let x = hx, y = hy
-        let al = .72 + .28 * Math.sin(t * 2.6 + d.phase)
-        let sz = d.size, cr = d.c[0], cg = d.c[1], cb = d.c[2]
+        let al = .24 + .12 * Math.sin(wave + 1.2) + .05 * Math.sin(t * 3 + d.phase)
+        let sz = d.size * szf, cr = d.c[0], cg = d.c[1], cb = d.c[2]
         let vx = 0, vy = 0
         const q1 = smooth((p - d.d) / STREAM_L1)
         if (q1 > 0 && tr) {
@@ -972,16 +983,16 @@ function ScrollStream() {
             const e = Math.max(q1 - .05, 0)
             x = qbez(hx, c1x, wxp, q1); y = qbez(hy, c1y, wyp, q1)
             vx = x - qbez(hx, c1x, wxp, e); vy = y - qbez(hy, c1y, wyp, e)
-            const hot = Math.max(1 - q1 / .3, 0)
+            const hot = Math.max(1 - q1 / .3, 0) * .6
             cr += (255 - cr) * hot; cg += (255 - cg) * hot; cb += (255 - cb) * hot
-            sz = d.size * (1 + hot * 1.6)
-            al = .95
+            sz = d.size * (1 + hot * .7)
+            al = .5
           } else {
             const q2 = smooth((p - d.d - STREAM_L1 - STREAM_HOLD) / STREAM_L2)
             if (q2 <= 0 || !kr) {
               x = wxp + Math.sin(t * 3 + d.phase) * 1.6
               y = wyp + Math.cos(t * 2.6 + d.phase) * 1.6
-              al = .9
+              al = .5
             } else if (q2 < 1) {
               const tx2 = kr.left + d.tx * kr.width
               const ty2 = kr.top + d.ty * kr.height
@@ -989,7 +1000,7 @@ function ScrollStream() {
               const e = Math.max(q2 - .05, 0)
               x = qbez(wxp, mx, tx2, q2); y = qbez(wyp, my, ty2, q2)
               vx = x - qbez(wxp, mx, tx2, e); vy = y - qbez(wyp, my, ty2, e)
-              al = .9 * (1 - q2 * .35)
+              al = .58 * (1 - q2 * .35)
             } else continue // absorbed into the ticket
           }
         }
@@ -1001,23 +1012,23 @@ function ScrollStream() {
           ctx.beginPath(); ctx.moveTo(x - vx, y - vy); ctx.lineTo(x, y); ctx.stroke()
         }
         // soft brand-color aura under a near-white core: the "shiny atom" look
-        const halo = sz * 3
-        ctx.globalAlpha = al * .22
+        const halo = sz * 2.4
+        ctx.globalAlpha = al * .12
         ctx.fillRect(x - halo / 2, y - halo / 2, halo, halo)
         ctx.globalAlpha = al
-        ctx.fillStyle = `rgb(${(cr + (255 - cr) * .3) | 0},${(cg + (255 - cg) * .3) | 0},${(cb + (255 - cb) * .3) | 0})`
+        ctx.fillStyle = `rgb(${(cr + (255 - cr) * .15) | 0},${(cg + (255 - cg) * .15) | 0},${(cb + (255 - cb) * .15) | 0})`
         ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz)
       }
       // flare when the stream relights "think", again as it pours into the ticket
       const flare = (r: DOMRect | undefined, q: number, R: number) => {
         if (!r || q <= 0 || q >= 1) return
-        ctx.globalAlpha = (1 - q) * .8
+        ctx.globalAlpha = (1 - q) * .55
         ctx.strokeStyle = '#9ec8ff'
         ctx.lineWidth = 1 + 2 * (1 - q)
         ctx.beginPath(); ctx.arc(r.left + r.width / 2, r.top + r.height / 2, 10 + q * R, 0, TAU); ctx.stroke()
       }
-      flare(tr, (p - .35) / .14, 70)
-      flare(kr, (p - .66) / .14, 90)
+      flare(tr, (p - .41) / .14, 70)
+      flare(kr, (p - .74) / .14, 90)
     }
 
     resize()
@@ -1339,7 +1350,7 @@ export function App() {
         <div className="mobile-screens" aria-label="StratFolio app screens"><div className="mobile-screen screen-one"><img src={asset('m2-screen.png')} alt="StratFolio portfolio plans screen" /></div><div className="desk-screen"><i className="desk-bar" aria-hidden="true"><b /><b /><b /></i><img src={asset('desk.png')} alt="StratFolio desktop dashboard" /></div><span className="dashboard-glow" /></div>
       </motion.div>
       <a className="hero-qr" href={installUrl} target="_blank" rel="noreferrer" aria-label="Open the StratFolio demo, or scan the code to install it on your phone"><img src={asset('install-qr.png')} alt="Scan to install the StratFolio mobile app" /><span>INSTALL DEMO</span></a>
-      <a href={`#${BOTTOM_ANCHOR}`} className="scroll-beacon" onClick={scrollToBottom} aria-label="Scroll for more"><span>SCROLL FOR MORE</span></a>
+      <a href={`#${BOTTOM_ANCHOR}`} className="scroll-beacon" onClick={scrollToBottom} aria-label="Scroll for more"><span>scroll for more</span></a>
     </section>
 
     <ScrollStream />
